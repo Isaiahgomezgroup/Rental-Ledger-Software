@@ -1,0 +1,23 @@
+{
+  "name": "rental-statement-sorter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local app for sorting rental-property bank statement transactions with AI-assisted matching.",
+  "scripts": {
+    "start": "node preview-server.js",
+    "backup:export": "node scripts/export-backup.js",
+    "backup:import": "node scripts/import-backup.js",
+    "check": "node --check preview-server.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.12.0",
+    "plaid": "^42.2.0"
+  },
+  "keywords": [
+    "rentals",
+    "bookkeeping",
+    "bank-statements",
+    "ai"
+  ],
+  "license": "UNLICENSED"
+}

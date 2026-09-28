@@ -1,0 +1,4163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rental Statement Sorter</title>
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d8d2c8;
+      --accent: #166a5b;
+      --accent-2: #a85524;
+      --soft: #e8f3f0;
+      --warn: #fff4d6;
+      --shadow: 0 12px 30px rgba(31, 41, 51, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      overflow-x: hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.85), rgba(247,244,238,1) 34%),
+        var(--bg);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--accent); }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .ghost {
+      background: transparent;
+    }
+
+    .danger {
+      color: #9a3412;
+      border-color: #f0b99a;
+    }
+
+    header {
+      padding: 26px clamp(18px, 5vw, 56px) 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 4;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      max-width: 820px;
+      line-height: 1.5;
+    }
+
+    main {
+      padding: 16px clamp(12px, 3vw, 34px) 34px;
+      display: grid;
+      gap: 12px;
+    }
+
+    main > * {
+      min-width: 0;
+    }
+
+    section,
+    aside {
+      background: rgba(255,255,255,0.86);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 13px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-top: 7px;
+    }
+
+    .rental-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+      max-height: 245px;
+      overflow: auto;
+    }
+
+    .rental-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      font-size: 12px;
+    }
+
+    .rental-row span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rental-meta {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
+      overflow-wrap: anywhere;
+    }
+
+    .rental-row button {
+      min-height: 28px;
+      padding: 0 8px;
+      font-size: 12px;
+    }
+
+    .plaid-accounts {
+      display: grid;
+      gap: 6px;
+      max-height: 190px;
+      overflow: auto;
+    }
+
+    .plaid-account {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 7px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      font-size: 12px;
+    }
+
+    .plaid-account input {
+      width: auto;
+      min-height: auto;
+      margin-top: 2px;
+    }
+
+    .plaid-account strong,
+    .plaid-account span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .plaid-account span {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .status {
+      min-height: 18px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin: 12px 0 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .statbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .stat strong {
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.4fr) repeat(5, minmax(120px, 0.8fr)) minmax(112px, auto) auto;
+      gap: 8px;
+      align-items: end;
+      min-width: 1100px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .transaction-panel {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .setup-bar {
+      display: grid;
+      grid-template-columns: minmax(210px, 0.7fr) minmax(420px, 1.35fr) minmax(360px, 1.15fr);
+      gap: 10px;
+      align-items: start;
+      min-width: 1030px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 250, 247, 0.86);
+    }
+
+    .setup-card {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .setup-card h2 {
+      margin-bottom: 0;
+      font-size: 14px;
+    }
+
+    .setup-card .field {
+      margin-bottom: 0;
+    }
+
+    .setup-actions {
+      grid-column: 1 / -1;
+      align-self: end;
+      justify-content: flex-start;
+    }
+
+    .setup-actions button {
+      min-height: 34px;
+    }
+
+    .setup-bar .status {
+      grid-column: 1 / -1;
+      margin: 0;
+    }
+
+    .lists-grid {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.75fr) minmax(220px, 1fr);
+      gap: 8px;
+    }
+
+    .lists-grid textarea {
+      min-height: 76px;
+      max-height: 118px;
+    }
+
+    .toggle-field {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      font-size: 13px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .toggle-field input {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 245px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1180px;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #ece7df;
+      padding: 6px 7px;
+      text-align: left;
+      vertical-align: middle;
+      font-size: 12px;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #fbfaf7;
+      color: #475467;
+      font-weight: 700;
+    }
+
+    td select,
+    td input {
+      min-height: 29px;
+      padding: 4px 6px;
+      font-size: 12px;
+    }
+
+    .amount {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: var(--soft);
+      color: #14564b;
+      white-space: nowrap;
+    }
+
+    .deposit {
+      background: #e7f7df;
+      color: #286016;
+    }
+
+    .expense {
+      background: #fff0e6;
+      color: #8a3a12;
+    }
+
+    .uncertain {
+      background: var(--warn);
+      color: #7a4f00;
+    }
+
+    .empty {
+      padding: 40px 18px;
+      text-align: center;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+    }
+
+    .summary-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .summary-tools button[aria-pressed="true"] {
+      background: var(--warn);
+      border-color: #e4b953;
+      color: #7a4f00;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+
+    .pl-chart {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .pl-chart h3 {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .chart-bars {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(54px, 1fr);
+      gap: 8px;
+      min-height: 160px;
+      align-items: end;
+      overflow-x: auto;
+      padding-top: 4px;
+    }
+
+    .chart-month {
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      gap: 5px;
+      min-height: 150px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .bar-track {
+      position: relative;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      min-height: 102px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .bar-track::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      border-top: 1px dashed #d7d0c4;
+    }
+
+    .net-bar {
+      position: absolute;
+      left: 50%;
+      bottom: 50%;
+      transform: translateX(-50%);
+      width: 22px;
+      min-height: 3px;
+      border-radius: 5px 5px 0 0;
+      background: #16703a;
+    }
+
+    .net-bar.negative-bar {
+      top: 50%;
+      bottom: auto;
+      border-radius: 0 0 5px 5px;
+      background: #a43d16;
+    }
+
+    .chart-label {
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .chart-money {
+      display: grid;
+      gap: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-money span {
+      white-space: nowrap;
+    }
+
+    .pl-month {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .pl-month h3 {
+      margin: 0;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 15px;
+      background: #fbfaf7;
+    }
+
+    .pl-table {
+      width: 100%;
+      min-width: 520px;
+      border-collapse: collapse;
+    }
+
+    .pl-month .table-wrap {
+      max-height: none;
+    }
+
+    .pl-table th,
+    .pl-table td {
+      padding: 8px 10px;
+      font-size: 12px;
+      border-bottom: 1px solid #ece7df;
+    }
+
+    .pl-table th {
+      position: static;
+      background: #fff;
+    }
+
+    .pl-table tfoot td {
+      font-weight: 700;
+      background: #fbfaf7;
+      border-bottom: 0;
+    }
+
+    .pl-breakdown summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+    }
+
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+      color: var(--ink);
+    }
+
+    .breakdown-group {
+      border: 1px solid #ece7df;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .breakdown-group h4 {
+      margin: 0;
+      padding: 7px 8px;
+      background: #fbfaf7;
+      border-bottom: 1px solid #ece7df;
+      font-size: 12px;
+    }
+
+    .breakdown-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #f1eee8;
+      font-size: 12px;
+    }
+
+    .breakdown-line:last-child {
+      border-bottom: 0;
+    }
+
+    .breakdown-line span:first-child {
+      overflow-wrap: anywhere;
+    }
+
+    .excel-pl-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .excel-pl {
+      width: 100%;
+      min-width: 1380px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    .excel-pl th,
+    .excel-pl td {
+      border: 1px solid #e8e2d8;
+      padding: 4px 6px;
+      font-size: 12px;
+      height: 22px;
+      vertical-align: middle;
+    }
+
+    .excel-pl th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f8f6f1;
+      color: var(--ink);
+      font-weight: 400;
+      text-align: left;
+    }
+
+    .excel-pl .month-head,
+    .excel-pl .number-cell {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .excel-pl .label-cell {
+      min-width: 190px;
+      white-space: nowrap;
+    }
+
+    .property-row td,
+    .section-row td,
+    .total-row td {
+      font-weight: 700;
+    }
+
+    .property-row td {
+      padding-top: 10px;
+      border-top: 0;
+      border-bottom: 0;
+    }
+
+    .section-row td {
+      border-bottom: 0;
+    }
+
+    .spacer-row td {
+      height: 12px;
+      border-left-color: transparent;
+      border-right-color: transparent;
+      background: #fff;
+    }
+
+    .pl-row td {
+      background: #91d64f;
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .global-spacer-row td {
+      height: 28px;
+      border-left-color: transparent;
+      border-right-color: transparent;
+      background: #fff;
+    }
+
+    .global-title-row td {
+      padding: 12px 10px;
+      border-color: #263d35;
+      background: #263d35;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .global-section-row td {
+      border-bottom: 2px solid #263d35;
+      background: #eef3f0;
+      font-weight: 800;
+    }
+
+    .global-total-row td {
+      border-top: 2px solid #263d35;
+      background: #eef3f0;
+      font-weight: 800;
+    }
+
+    .global-pl-row td {
+      padding-top: 8px;
+      padding-bottom: 8px;
+      border-color: #263d35;
+      background: #91d64f;
+      color: #111827;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .year-title {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #ece7df;
+      align-items: center;
+    }
+
+    .summary-row:last-child { border-bottom: 0; }
+
+    .summary-row strong { overflow-wrap: anywhere; }
+
+    .positive { color: #16703a; }
+    .negative { color: #a43d16; }
+    .ignored-row {
+      color: var(--muted);
+      background: #f5f3ef;
+    }
+    td button {
+      min-height: 28px;
+      padding: 0 7px;
+      font-size: 11px;
+    }
+    .split-note {
+      color: var(--muted);
+      display: block;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(31, 41, 51, 0.45);
+    }
+
+    .modal-backdrop[hidden] {
+      display: none;
+    }
+
+    .modal {
+      width: min(920px, 100%);
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 24px 60px rgba(31, 41, 51, 0.22);
+    }
+
+    .modal-header,
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-footer {
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+      flex-wrap: wrap;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .split-meta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .split-editor {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+    }
+
+    .split-editor th,
+    .split-editor td {
+      padding: 7px;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    .split-editor input[type="checkbox"] {
+      width: auto;
+      min-height: auto;
+    }
+
+    .split-editor .amount-input {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .split-total {
+      color: var(--muted);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .split-total strong {
+      color: var(--ink);
+    }
+
+    .split-error {
+      min-height: 18px;
+      color: #9a3412;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .edit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .edit-grid .wide {
+      grid-column: 1 / -1;
+    }
+
+    .unit-tools {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .unit-tools select {
+      min-width: 0;
+    }
+
+    .unit-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 30px;
+      padding-top: 2px;
+    }
+
+    .unit-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fbfaf7;
+      color: var(--ink);
+      font-size: 12px;
+    }
+
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .manual-grid .wide {
+      grid-column: span 2;
+    }
+
+    .app-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .app-tab {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom-color: transparent;
+      background: transparent;
+    }
+
+    .app-tab[aria-selected="true"] {
+      background: #fff;
+      border-color: var(--line);
+      border-bottom-color: #fff;
+      color: var(--ink);
+      font-weight: 700;
+      transform: translateY(1px);
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .billable-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .billable-control input {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+    }
+
+    .company-pl {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 1020px) {
+      .statbar { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+      .table-wrap { max-height: none; }
+    }
+
+    @media (max-width: 640px) {
+      header { position: static; }
+      .statbar { grid-template-columns: 1fr; }
+      section,
+      aside { border-radius: 6px; }
+      .breakdown-grid { grid-template-columns: 1fr; }
+      .edit-grid { grid-template-columns: 1fr; }
+      .unit-tools { grid-template-columns: 1fr; }
+      .modal-footer .actions,
+      .modal-footer button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>Rental Statement Sorter</h1>
+        <p class="subtitle">Import bank CSVs, split deposits and expenses by rental, correct the guesses, and use AI matching from your saved transaction history.</p>
+      </div>
+      <div class="actions">
+        <button id="exportCsv" class="primary" type="button">Export CSV</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <nav class="app-tabs" aria-label="Application sections">
+      <button id="rentalTab" class="app-tab" type="button" aria-selected="true">Rental Sorter</button>
+      <button id="accountingTab" class="app-tab" type="button" aria-selected="false">Company Accounting</button>
+    </nav>
+
+    <div class="statbar" aria-live="polite">
+      <div class="stat"><span>Transactions</span><strong id="totalCount">0</strong></div>
+      <div class="stat"><span>Deposits</span><strong id="depositTotal">$0.00</strong></div>
+      <div class="stat"><span>Expenses</span><strong id="expenseTotal">$0.00</strong></div>
+      <div class="stat"><span>Need Review</span><strong id="reviewCount">0</strong></div>
+    </div>
+
+    <section class="transaction-panel">
+      <div class="setup-bar">
+        <div class="setup-card">
+          <h2>Import</h2>
+          <div class="field">
+            <label for="csvFile">Bank statement CSV</label>
+            <input id="csvFile" type="file" accept=".csv,text/csv">
+            <p class="hint">CSV should include date, description, and amount columns.</p>
+          </div>
+          <div class="actions" style="margin-top:10px">
+            <button id="connectPlaid" class="primary" type="button">Connect Bank</button>
+            <button id="syncPlaid" type="button">Sync Plaid</button>
+          </div>
+          <p id="plaidStatus" class="hint"></p>
+          <div id="plaidAccounts" class="plaid-accounts"></div>
+          <div class="actions" style="margin-top:8px">
+            <button id="savePlaidAccounts" type="button">Save Accounts</button>
+          </div>
+        </div>
+        <div class="setup-card">
+          <h2>Manual Transaction</h2>
+          <div class="manual-grid">
+            <div>
+              <label for="manualDate">Date</label>
+              <input id="manualDate" type="date">
+            </div>
+            <div>
+              <label for="manualAmount">Amount</label>
+              <input id="manualAmount" type="text" placeholder="125.00 or -45.67">
+            </div>
+            <div class="wide">
+              <label for="manualDescription">Description</label>
+              <input id="manualDescription" type="text" placeholder="Vendor, tenant, or note">
+            </div>
+            <div>
+              <label for="manualType">Type</label>
+              <select id="manualType">
+                <option value="Expense">Expense</option>
+                <option value="Deposit">Deposit</option>
+              </select>
+            </div>
+            <div>
+              <label for="manualOwner">Owner</label>
+              <select id="manualOwner"></select>
+            </div>
+            <div>
+              <label for="manualProperty">Rental</label>
+              <select id="manualProperty"></select>
+            </div>
+            <div>
+              <label for="manualUnit">Unit</label>
+              <select id="manualUnit"></select>
+            </div>
+            <div class="wide">
+              <label for="manualCategory">Category</label>
+              <select id="manualCategory"></select>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:10px">
+            <button id="addManualTransaction" class="primary" type="button">Add Transaction</button>
+          </div>
+        </div>
+        <div class="setup-card">
+          <h2>Rental Setup</h2>
+          <textarea id="ownersInput" spellcheck="false" hidden></textarea>
+          <textarea id="propertiesInput" spellcheck="false" hidden></textarea>
+          <p class="hint">Use Edit to manage rental name, owner, and units.</p>
+          <div id="rentalList" class="rental-list" aria-live="polite"></div>
+        </div>
+        <div class="actions setup-actions">
+          <button id="saveOwners" class="primary" type="button" hidden>Save Owners</button>
+          <button id="saveProperties" class="primary" type="button" hidden>Save Rentals</button>
+          <button id="backupData" type="button">Backup DB</button>
+          <button id="clearData" class="danger" type="button">Reset Lists</button>
+          <button id="clearTransactions" class="danger" type="button">Clear Transactions</button>
+        </div>
+        <p id="appStatus" class="status" aria-live="polite"></p>
+      </div>
+      <div class="toolbar">
+          <div>
+            <label for="search">Search</label>
+            <input id="search" type="text" placeholder="Description, property, or category">
+          </div>
+          <div>
+            <label for="propertyFilter">Rental</label>
+            <select id="propertyFilter"></select>
+          </div>
+          <div>
+            <label for="monthFilter">Month</label>
+            <select id="monthFilter"></select>
+          </div>
+          <div>
+            <label for="typeFilter">Type</label>
+            <select id="typeFilter">
+              <option value="">All</option>
+              <option value="Deposit">Deposits</option>
+              <option value="Expense">Expenses</option>
+            </select>
+          </div>
+          <div>
+            <label for="reviewFilter">Review</label>
+            <select id="reviewFilter">
+              <option value="">All</option>
+              <option value="review">Needs review</option>
+              <option value="ai">AI matched</option>
+              <option value="manual">Manual</option>
+              <option value="ignored">Ignored</option>
+            </select>
+          </div>
+          <div>
+            <label for="dateSort">Sort</label>
+            <select id="dateSort">
+              <option value="desc">Newest first</option>
+              <option value="asc">Oldest first</option>
+              <option value="none">Imported order</option>
+            </select>
+          </div>
+          <label class="toggle-field" for="showIgnored">
+            <input id="showIgnored" type="checkbox">
+            Show ignored
+          </label>
+          <button id="aiMatch" class="primary" type="button">AI Match</button>
+      </div>
+
+      <div id="tableMount" class="table-wrap">
+        <div class="empty">Upload a CSV statement to start sorting transactions.</div>
+      </div>
+    </section>
+
+    <section id="rentalSummaryPanel" class="panel">
+      <div class="section-head">
+        <h2>Monthly P&amp;L By Rental</h2>
+        <div class="summary-tools">
+          <button id="toggleMortgageSummary" type="button" aria-pressed="false">Exclude Mortgage</button>
+          <button id="toggleCapitalImprovementSummary" type="button" aria-pressed="false">Exclude Capital Improvement</button>
+        </div>
+      </div>
+      <div id="summary" class="summary-grid"></div>
+    </section>
+  </main>
+
+  <div id="splitModal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="splitModalTitle">
+      <div class="modal-header">
+        <h2 id="splitModalTitle">Split Transaction</h2>
+        <button id="closeSplitModal" type="button" aria-label="Close split editor">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="split-meta">
+          <span id="splitDescription"></span>
+          <strong id="splitExpectedTotal"></strong>
+        </div>
+        <div class="table-wrap">
+          <table class="split-editor">
+            <thead>
+              <tr>
+                <th>Amount</th>
+                <th>Rental</th>
+                <th>Unit</th>
+                <th>Category</th>
+                <th>Ignore</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="splitRows"></tbody>
+          </table>
+        </div>
+        <div class="actions">
+          <button id="addSplitRow" type="button">Add Row</button>
+        </div>
+        <div id="splitError" class="split-error" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <div id="splitTotal" class="split-total"></div>
+        <div class="actions">
+          <button id="cancelSplit" type="button">Cancel</button>
+          <button id="saveSplit" class="primary" type="button">Save Split</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+      <div class="modal-header">
+        <h2 id="editModalTitle">Edit Transaction</h2>
+        <button id="closeEditModal" type="button" aria-label="Close transaction editor">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="edit-grid">
+          <div>
+            <label for="editDate">Date</label>
+            <input id="editDate" type="date">
+          </div>
+          <div>
+            <label for="editAmount">Amount</label>
+            <input id="editAmount" type="text" placeholder="125.00 or -45.67">
+          </div>
+          <div class="wide">
+            <label for="editDescription">Description</label>
+            <input id="editDescription" type="text">
+          </div>
+          <div>
+            <label for="editType">Type</label>
+            <select id="editType">
+              <option value="Expense">Expense</option>
+              <option value="Deposit">Deposit</option>
+            </select>
+          </div>
+          <div>
+            <label class="toggle-field" for="editIgnored">
+              <input id="editIgnored" type="checkbox">
+              Ignore transaction
+            </label>
+          </div>
+          <div id="editOwnerField">
+            <label for="editOwner">Owner</label>
+            <select id="editOwner"></select>
+          </div>
+          <div id="editPropertyField">
+            <label for="editProperty">Rental</label>
+            <select id="editProperty"></select>
+          </div>
+          <div id="editUnitField">
+            <label for="editUnit">Unit</label>
+            <select id="editUnit"></select>
+          </div>
+          <div id="editCategoryField">
+            <label for="editCategory">Category</label>
+            <select id="editCategory"></select>
+          </div>
+          <div>
+            <label for="editConfidence">Status</label>
+            <input id="editConfidence" type="text">
+          </div>
+          <div>
+            <label for="editSource">Source</label>
+            <input id="editSource" type="text">
+          </div>
+        </div>
+
+        <div id="editSplitsPanel" hidden>
+          <h2>Split Allocations</h2>
+          <div class="table-wrap">
+            <table class="split-editor">
+              <thead>
+                <tr>
+                  <th>Amount</th>
+                  <th>Rental</th>
+                  <th>Unit</th>
+                  <th>Category</th>
+                  <th>Ignore</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="editSplitRows"></tbody>
+            </table>
+          </div>
+          <div class="actions" style="margin-top:10px">
+            <button id="addEditSplitRow" type="button">Add Row</button>
+          </div>
+          <div id="editSplitTotal" class="split-total"></div>
+        </div>
+
+        <div id="editError" class="split-error" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <span class="hint">Changing type will make the saved amount positive for deposits or negative for expenses.</span>
+        <div class="actions">
+          <button id="cancelEdit" type="button">Cancel</button>
+          <button id="saveEdit" class="primary" type="button">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rentalModal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rentalModalTitle">
+      <div class="modal-header">
+        <h2 id="rentalModalTitle">Edit Rental</h2>
+        <button id="closeRentalModal" type="button" aria-label="Close rental editor">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="edit-grid">
+          <div class="wide">
+            <label for="rentalNameInput">Rental Name</label>
+            <input id="rentalNameInput" type="text">
+          </div>
+          <div>
+            <label for="rentalOwnerSelect">Owner</label>
+            <select id="rentalOwnerSelect"></select>
+          </div>
+          <div>
+            <label for="newRentalOwnerInput">Add Owner</label>
+            <div class="unit-tools">
+              <input id="newRentalOwnerInput" type="text" placeholder="New owner name">
+              <button id="addRentalOwner" type="button">Add</button>
+            </div>
+          </div>
+          <div>
+            <label for="rentalUnitSelect">Units</label>
+            <div class="unit-tools">
+              <select id="rentalUnitSelect"></select>
+              <button id="removeRentalUnit" type="button">Remove</button>
+            </div>
+          </div>
+          <div>
+            <label for="newRentalUnitInput">Add Unit</label>
+            <div class="unit-tools">
+              <input id="newRentalUnitInput" type="text" placeholder="Unit name">
+              <button id="addRentalUnit" type="button">Add</button>
+            </div>
+          </div>
+          <div class="wide">
+            <label>Current Units</label>
+            <div id="rentalUnitList" class="unit-list"></div>
+          </div>
+        </div>
+        <div id="rentalError" class="split-error" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <span class="hint">Owner and unit changes update transactions assigned to this rental.</span>
+        <div class="actions">
+          <button id="cancelRentalEdit" type="button">Cancel</button>
+          <button id="saveRentalEdit" class="primary" type="button">Save Rental</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+  <script>
+    const defaultCategories = [
+      "Rent Income",
+      "Security Deposit",
+      "Repairs & Maintenance",
+      "Utilities",
+      "Mortgage",
+      "Property Tax",
+      "Insurance",
+      "HOA",
+      "Supplies",
+      "Professional Services",
+      "Bank Fees",
+      "Transfer",
+      "Owner Draw",
+      "Uncategorized"
+    ];
+
+    const LEGACY_STORAGE_KEYS = {
+      properties: "rental-sorter-properties-v1",
+      categories: "rental-sorter-categories-v1",
+      transactions: "rental-sorter-transactions-v1"
+    };
+    const RECOVERY_STORAGE_KEY = "rental-sorter-unsaved-recovery-v1";
+
+    let appMode = "rental";
+    let rentalTransactions = [];
+    let accountingTransactions = [];
+    let transactions = rentalTransactions;
+    let categories = [...defaultCategories];
+    let owners = [];
+    let rentalPlaidItems = [];
+    let accountingPlaidItems = [];
+    let plaidItems = rentalPlaidItems;
+    let properties = [];
+    let propertyDetails = {};
+    let databaseReady = false;
+    let splitEditingId = "";
+    let splitDraftRows = [];
+    let editTransactionId = "";
+    let editSplitDraftRows = [];
+    let editingRentalName = "";
+    let rentalEditorOwners = [];
+    let rentalEditorUnits = [];
+    let excludeMortgageFromSummary = false;
+    let saveQueue = Promise.resolve();
+    let saveVersion = 0;
+    let excludeCapitalImprovementFromSummary = false;
+
+    const els = {
+      rentalTab: document.getElementById("rentalTab"),
+      accountingTab: document.getElementById("accountingTab"),
+      csvFile: document.getElementById("csvFile"),
+      connectPlaid: document.getElementById("connectPlaid"),
+      syncPlaid: document.getElementById("syncPlaid"),
+      plaidStatus: document.getElementById("plaidStatus"),
+      plaidAccounts: document.getElementById("plaidAccounts"),
+      savePlaidAccounts: document.getElementById("savePlaidAccounts"),
+      manualDate: document.getElementById("manualDate"),
+      manualAmount: document.getElementById("manualAmount"),
+      manualDescription: document.getElementById("manualDescription"),
+      manualType: document.getElementById("manualType"),
+      manualOwner: document.getElementById("manualOwner"),
+      manualProperty: document.getElementById("manualProperty"),
+      manualUnit: document.getElementById("manualUnit"),
+      manualCategory: document.getElementById("manualCategory"),
+      addManualTransaction: document.getElementById("addManualTransaction"),
+      ownersInput: document.getElementById("ownersInput"),
+      propertiesInput: document.getElementById("propertiesInput"),
+      rentalList: document.getElementById("rentalList"),
+      saveOwners: document.getElementById("saveOwners"),
+      saveProperties: document.getElementById("saveProperties"),
+      backupData: document.getElementById("backupData"),
+      clearData: document.getElementById("clearData"),
+      clearTransactions: document.getElementById("clearTransactions"),
+      toggleMortgageSummary: document.getElementById("toggleMortgageSummary"),
+      toggleCapitalImprovementSummary: document.getElementById("toggleCapitalImprovementSummary"),
+      tableMount: document.getElementById("tableMount"),
+      rentalSummaryPanel: document.getElementById("rentalSummaryPanel"),
+      summary: document.getElementById("summary"),
+      search: document.getElementById("search"),
+      propertyFilter: document.getElementById("propertyFilter"),
+      monthFilter: document.getElementById("monthFilter"),
+      typeFilter: document.getElementById("typeFilter"),
+      reviewFilter: document.getElementById("reviewFilter"),
+      dateSort: document.getElementById("dateSort"),
+      showIgnored: document.getElementById("showIgnored"),
+      aiMatch: document.getElementById("aiMatch"),
+      exportCsv: document.getElementById("exportCsv"),
+      appStatus: document.getElementById("appStatus"),
+      totalCount: document.getElementById("totalCount"),
+      depositTotal: document.getElementById("depositTotal"),
+      expenseTotal: document.getElementById("expenseTotal"),
+      reviewCount: document.getElementById("reviewCount"),
+      splitModal: document.getElementById("splitModal"),
+      splitDescription: document.getElementById("splitDescription"),
+      splitExpectedTotal: document.getElementById("splitExpectedTotal"),
+      splitRows: document.getElementById("splitRows"),
+      splitTotal: document.getElementById("splitTotal"),
+      splitError: document.getElementById("splitError"),
+      addSplitRow: document.getElementById("addSplitRow"),
+      closeSplitModal: document.getElementById("closeSplitModal"),
+      cancelSplit: document.getElementById("cancelSplit"),
+      saveSplit: document.getElementById("saveSplit"),
+      editModal: document.getElementById("editModal"),
+      editDate: document.getElementById("editDate"),
+      editAmount: document.getElementById("editAmount"),
+      editDescription: document.getElementById("editDescription"),
+      editType: document.getElementById("editType"),
+      editIgnored: document.getElementById("editIgnored"),
+      editOwner: document.getElementById("editOwner"),
+      editProperty: document.getElementById("editProperty"),
+      editUnit: document.getElementById("editUnit"),
+      editCategory: document.getElementById("editCategory"),
+      editConfidence: document.getElementById("editConfidence"),
+      editSource: document.getElementById("editSource"),
+      editOwnerField: document.getElementById("editOwnerField"),
+      editPropertyField: document.getElementById("editPropertyField"),
+      editUnitField: document.getElementById("editUnitField"),
+      editCategoryField: document.getElementById("editCategoryField"),
+      editSplitsPanel: document.getElementById("editSplitsPanel"),
+      editSplitRows: document.getElementById("editSplitRows"),
+      editSplitTotal: document.getElementById("editSplitTotal"),
+      editError: document.getElementById("editError"),
+      addEditSplitRow: document.getElementById("addEditSplitRow"),
+      closeEditModal: document.getElementById("closeEditModal"),
+      cancelEdit: document.getElementById("cancelEdit"),
+      saveEdit: document.getElementById("saveEdit"),
+      rentalModal: document.getElementById("rentalModal"),
+      rentalNameInput: document.getElementById("rentalNameInput"),
+      rentalOwnerSelect: document.getElementById("rentalOwnerSelect"),
+      newRentalOwnerInput: document.getElementById("newRentalOwnerInput"),
+      addRentalOwner: document.getElementById("addRentalOwner"),
+      rentalUnitSelect: document.getElementById("rentalUnitSelect"),
+      newRentalUnitInput: document.getElementById("newRentalUnitInput"),
+      addRentalUnit: document.getElementById("addRentalUnit"),
+      removeRentalUnit: document.getElementById("removeRentalUnit"),
+      rentalUnitList: document.getElementById("rentalUnitList"),
+      rentalError: document.getElementById("rentalError"),
+      closeRentalModal: document.getElementById("closeRentalModal"),
+      cancelRentalEdit: document.getElementById("cancelRentalEdit"),
+      saveRentalEdit: document.getElementById("saveRentalEdit")
+    };
+
+    init();
+
+    async function init() {
+      setEditingEnabled(false);
+      els.ownersInput.value = owners.join("\n");
+      els.propertiesInput.value = properties.join("\n");
+      renderModeChrome();
+      renderFilters();
+      renderSummary();
+      renderTable();
+      bindEvents();
+      await loadDatabaseState();
+      els.manualDate.valueAsDate = new Date();
+    }
+
+    function bindEvents() {
+      els.rentalTab.addEventListener("click", () => switchAppMode("rental"));
+      els.accountingTab.addEventListener("click", () => switchAppMode("accounting"));
+      els.csvFile.addEventListener("change", handleFile);
+      els.connectPlaid.addEventListener("click", connectPlaid);
+      els.syncPlaid.addEventListener("click", () => syncPlaidTransactions());
+      els.savePlaidAccounts.addEventListener("click", savePlaidAccounts);
+      els.addManualTransaction.addEventListener("click", addManualTransaction);
+      els.manualType.addEventListener("change", updateManualCategoryDefault);
+      els.manualOwner.addEventListener("change", () => renderManualOptions());
+      els.manualProperty.addEventListener("change", () => {
+        syncManualOwnerFromProperty();
+        renderManualUnitOptions();
+      });
+      els.saveOwners.addEventListener("click", saveOwners);
+      els.saveProperties.addEventListener("click", saveProperties);
+      els.backupData.addEventListener("click", backupDatabase);
+      els.clearData.addEventListener("click", resetLists);
+      els.clearTransactions.addEventListener("click", clearTransactions);
+      els.toggleMortgageSummary.addEventListener("click", toggleMortgageSummary);
+      els.toggleCapitalImprovementSummary.addEventListener("click", toggleCapitalImprovementSummary);
+      els.search.addEventListener("input", renderTable);
+      els.propertyFilter.addEventListener("change", renderTable);
+      els.monthFilter.addEventListener("change", renderTable);
+      els.typeFilter.addEventListener("change", renderTable);
+      els.reviewFilter.addEventListener("change", renderTable);
+      els.dateSort.addEventListener("change", renderTable);
+      els.showIgnored.addEventListener("change", renderTable);
+      els.aiMatch.addEventListener("click", aiMatchTransactions);
+      els.exportCsv.addEventListener("click", exportTransactions);
+      els.addSplitRow.addEventListener("click", () => {
+        splitDraftRows.push(defaultSplitDraftRow());
+        renderSplitRows();
+      });
+      els.closeSplitModal.addEventListener("click", closeSplitEditor);
+      els.cancelSplit.addEventListener("click", closeSplitEditor);
+      els.saveSplit.addEventListener("click", saveSplitEditor);
+      els.splitModal.addEventListener("click", (event) => {
+        if (event.target === els.splitModal) closeSplitEditor();
+      });
+      els.splitRows.addEventListener("input", updateSplitDraftFromEvent);
+      els.splitRows.addEventListener("change", updateSplitDraftFromEvent);
+      els.splitRows.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-remove-split]");
+        if (!button) return;
+        const index = Number(button.dataset.removeSplit);
+        splitDraftRows.splice(index, 1);
+        if (!splitDraftRows.length) splitDraftRows.push(defaultSplitDraftRow());
+        renderSplitRows();
+      });
+      els.closeEditModal.addEventListener("click", closeEditTransaction);
+      els.cancelEdit.addEventListener("click", closeEditTransaction);
+      els.saveEdit.addEventListener("click", saveEditTransaction);
+      els.editAmount.addEventListener("input", updateEditSplitTotal);
+      els.editOwner.addEventListener("change", () => renderEditPropertyOptions());
+      els.editProperty.addEventListener("change", () => {
+        syncEditOwnerFromProperty();
+        renderEditUnitOptions();
+      });
+      els.editModal.addEventListener("click", (event) => {
+        if (event.target === els.editModal) closeEditTransaction();
+      });
+      els.addEditSplitRow.addEventListener("click", () => {
+        editSplitDraftRows.push(defaultEditSplitDraftRow());
+        renderEditSplitRows();
+      });
+      els.editSplitRows.addEventListener("input", updateEditSplitDraftFromEvent);
+      els.editSplitRows.addEventListener("change", updateEditSplitDraftFromEvent);
+      els.editSplitRows.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-remove-edit-split]");
+        if (!button) return;
+        const index = Number(button.dataset.removeEditSplit);
+        editSplitDraftRows.splice(index, 1);
+        if (!editSplitDraftRows.length) editSplitDraftRows.push(defaultEditSplitDraftRow());
+        renderEditSplitRows();
+      });
+      els.closeRentalModal.addEventListener("click", closeRentalEditor);
+      els.cancelRentalEdit.addEventListener("click", closeRentalEditor);
+      els.saveRentalEdit.addEventListener("click", saveRentalEditor);
+      els.addRentalOwner.addEventListener("click", addOwnerFromRentalEditor);
+      els.newRentalOwnerInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addOwnerFromRentalEditor();
+        }
+      });
+      els.addRentalUnit.addEventListener("click", addUnitFromRentalEditor);
+      els.newRentalUnitInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addUnitFromRentalEditor();
+        }
+      });
+      els.removeRentalUnit.addEventListener("click", removeSelectedRentalUnit);
+      els.rentalModal.addEventListener("click", (event) => {
+        if (event.target === els.rentalModal) closeRentalEditor();
+      });
+    }
+
+    function switchAppMode(mode) {
+      if (mode === appMode) return;
+      storeActiveBranch();
+      appMode = mode === "accounting" ? "accounting" : "rental";
+      activateBranch();
+      setStatus(appMode === "accounting"
+        ? "Company accounting is active. Assignments are saved here and do not affect rental P&L yet."
+        : "Rental sorter is active.");
+      renderAll();
+    }
+
+    function storeActiveBranch() {
+      if (appMode === "accounting") {
+        accountingTransactions = transactions;
+        accountingPlaidItems = plaidItems;
+      } else {
+        rentalTransactions = transactions;
+        rentalPlaidItems = plaidItems;
+      }
+    }
+
+    function activateBranch() {
+      if (appMode === "accounting") {
+        transactions = accountingTransactions;
+        plaidItems = accountingPlaidItems;
+      } else {
+        transactions = rentalTransactions;
+        plaidItems = rentalPlaidItems;
+      }
+    }
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const rows = parseCsv(String(reader.result || ""));
+        const imported = rows.map((row, index) => normalizeTransaction(row, index)).filter(Boolean);
+        const result = mergeTransactions(imported);
+        setStatus(`Imported ${result.added} new transaction${result.added === 1 ? "" : "s"}; skipped ${result.skipped} duplicate${result.skipped === 1 ? "" : "s"}.`);
+        renderAll();
+      };
+      reader.readAsText(file);
+    }
+
+    async function connectPlaid() {
+      if (!databaseReady) {
+        setStatus("MongoDB is unavailable. Plaid connection was not saved.");
+        return;
+      }
+      if (!window.Plaid) {
+        setStatus("Plaid Link did not load. Check your internet connection and refresh the app.");
+        return;
+      }
+
+      setStatus("Creating Plaid connection...");
+      els.connectPlaid.disabled = true;
+      const plaidScope = appMode;
+
+      try {
+        const tokenResponse = await fetch("/api/plaid/link-token", { method: "POST" });
+        const tokenPayload = await tokenResponse.json();
+        if (!tokenResponse.ok) throw new Error(tokenPayload.error || "Could not create a Plaid Link token.");
+
+        const handler = Plaid.create({
+          token: tokenPayload.link_token,
+          onSuccess: async (publicToken, metadata) => {
+            try {
+              setStatus("Saving Plaid bank connection...");
+              const exchangeResponse = await fetch("/api/plaid/exchange-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ public_token: publicToken, metadata, scope: plaidScope })
+              });
+              const exchangePayload = await exchangeResponse.json();
+              if (!exchangeResponse.ok) throw new Error(exchangePayload.error || "Could not save Plaid connection.");
+              applyState(exchangePayload.state);
+              renderAll();
+              setStatus(`Connected ${exchangePayload.item?.institutionName || "bank"} with Plaid.`);
+              await syncPlaidTransactions(plaidScope);
+            } catch (error) {
+              setStatus(error.message || "Plaid connection failed.");
+            } finally {
+              els.connectPlaid.disabled = false;
+            }
+          },
+          onExit: (error) => {
+            els.connectPlaid.disabled = false;
+            if (error) setStatus(error.display_message || error.error_message || "Plaid Link closed before connecting.");
+          }
+        });
+        handler.open();
+      } catch (error) {
+        els.connectPlaid.disabled = false;
+        setStatus(error.message || "Plaid setup failed.");
+      }
+    }
+
+    async function syncPlaidTransactions(scope = appMode) {
+      scope = scope === "accounting" || scope === "rental" ? scope : appMode;
+      if (!databaseReady) {
+        setStatus("MongoDB is unavailable. Plaid transactions were not synced.");
+        return;
+      }
+
+      setStatus("Syncing Plaid transactions...");
+      els.syncPlaid.disabled = true;
+
+      try {
+        const selectedItems = plaidAccountSelectionPayload(scope);
+        applyPlaidSelectionToActiveBranch(scope, selectedItems);
+        const response = await fetch("/api/plaid/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scope, items: selectedItems })
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Plaid sync failed.");
+        applyState(payload.state);
+        renderAll();
+        setStatus(`Plaid sync complete: ${payload.added} added, ${payload.skipped || 0} skipped, ${payload.removed} removed.`);
+      } catch (error) {
+        setStatus(error.message || "Plaid sync failed.");
+      } finally {
+        els.syncPlaid.disabled = false;
+      }
+    }
+
+    function applyPlaidSelectionToActiveBranch(scope, selectedItems) {
+      if (scope !== appMode || !Array.isArray(selectedItems)) return;
+      const selectedByItem = new Map(selectedItems.map((item) => [item.itemId, item.selectedAccountIds || []]));
+      plaidItems = plaidItems.map((item) => ({
+        ...item,
+        selectedAccountIds: selectedByItem.has(item.itemId) ? selectedByItem.get(item.itemId) : item.selectedAccountIds
+      }));
+      storeActiveBranch();
+    }
+
+    async function savePlaidAccounts() {
+      if (!databaseReady) {
+        setStatus("MongoDB is unavailable. Plaid account selection was not saved.");
+        return;
+      }
+
+      const items = plaidAccountSelectionPayload(appMode);
+
+      els.savePlaidAccounts.disabled = true;
+      setStatus("Saving Plaid account selection...");
+
+      try {
+        const response = await fetch("/api/plaid/accounts", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items, scope: appMode })
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Plaid account selection could not be saved.");
+        applyState(payload.state);
+        renderAll();
+        setStatus("Plaid account selection saved.");
+      } catch (error) {
+        setStatus(error.message || "Plaid account selection could not be saved.");
+      } finally {
+        els.savePlaidAccounts.disabled = false;
+      }
+    }
+
+    function plaidAccountSelectionPayload(scope = appMode) {
+      scope = scope === "accounting" || scope === "rental" ? scope : appMode;
+      if (scope !== appMode) {
+        const sourceItems = scope === "accounting" ? accountingPlaidItems : rentalPlaidItems;
+        return sourceItems.map((item) => ({
+          itemId: item.itemId,
+          selectedAccountIds: Array.isArray(item.selectedAccountIds) ? item.selectedAccountIds : []
+        }));
+      }
+
+      return plaidItems.map((item) => ({
+        itemId: item.itemId,
+        selectedAccountIds: Array.from(els.plaidAccounts.querySelectorAll("input[data-plaid-item]:checked"))
+          .filter((input) => input.dataset.plaidItem === item.itemId)
+          .map((input) => input.value)
+      }));
+    }
+
+    function normalizeTransaction(row, index) {
+      const keys = Object.keys(row);
+      const dateKey = findColumn(keys, ["date", "posted date", "transaction date"]);
+      const descriptionKey = findColumn(keys, ["description", "memo", "name", "payee", "details"]);
+      const amountKey = findColumn(keys, ["amount", "transaction amount"]);
+      const debitKey = findColumn(keys, ["debit", "withdrawal", "withdrawals"]);
+      const creditKey = findColumn(keys, ["credit", "deposit", "deposits"]);
+
+      if (!descriptionKey || (!amountKey && !debitKey && !creditKey)) return null;
+
+      let amount = amountKey ? parseMoney(row[amountKey]) : 0;
+      if (!amountKey) {
+        const debit = parseMoney(row[debitKey]);
+        const credit = parseMoney(row[creditKey]);
+        amount = credit || -Math.abs(debit || 0);
+      }
+
+      const description = String(row[descriptionKey] || "").trim();
+      const type = amount >= 0 ? "Deposit" : "Expense";
+
+      return {
+        id: transactionId(String(row[dateKey] || "").trim(), description, amount, index),
+        date: String(row[dateKey] || "").trim(),
+        description,
+        amount,
+        type,
+        property: "",
+        category: type === "Deposit" ? "Rent Income" : "Uncategorized",
+        confidence: "Needs review",
+        source: "",
+        ignored: false,
+        billable: appMode === "accounting" ? false : undefined,
+        splits: []
+      };
+    }
+
+    function mergeTransactions(imported) {
+      const existingIds = new Set(transactions.map((transaction) => transaction.id));
+      let added = 0;
+      let skipped = 0;
+
+      imported.forEach((transaction) => {
+        if (existingIds.has(transaction.id)) {
+          skipped += 1;
+          return;
+        }
+        transactions.push(transaction);
+        existingIds.add(transaction.id);
+        added += 1;
+      });
+
+      persistTransactions();
+      return { added, skipped };
+    }
+
+    function addManualTransaction() {
+      if (!databaseReady) {
+        setStatus("MongoDB is unavailable. Manual transaction was not saved.");
+        return;
+      }
+
+      const date = els.manualDate.value;
+      const description = els.manualDescription.value.trim();
+      const rawAmount = parseMoney(els.manualAmount.value);
+      const type = els.manualType.value;
+      const amount = type === "Expense" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
+
+      if (!date) {
+        setStatus("Add a date before saving the manual transaction.");
+        return;
+      }
+      if (!description) {
+        setStatus("Add a description before saving the manual transaction.");
+        return;
+      }
+      if (!amount) {
+        setStatus("Add a non-zero amount before saving the manual transaction.");
+        return;
+      }
+
+      const transaction = {
+        id: manualTransactionId(date, description, amount),
+        date: formatManualDate(date),
+        description,
+        amount,
+        type,
+        owner: els.manualOwner.value || ownerForProperty(els.manualProperty.value),
+        property: els.manualProperty.value,
+        unit: els.manualUnit.value,
+        category: els.manualCategory.value || (type === "Deposit" ? "Rent Income" : "Uncategorized"),
+        confidence: els.manualOwner.value || els.manualProperty.value ? "Manual" : "Needs review",
+        source: "Manual entry",
+        ignored: false,
+        billable: appMode === "accounting" ? Boolean(els.manualProperty.value) : undefined,
+        splits: []
+      };
+
+      transactions.push(transaction);
+      persistTransactions();
+      els.manualDescription.value = "";
+      els.manualAmount.value = "";
+      setStatus(`Added manual transaction: ${description}.`);
+      renderAll();
+    }
+
+    function updateManualCategoryDefault() {
+      const target = els.manualType.value === "Deposit" ? "Rent Income" : "Uncategorized";
+      if (categories.includes(target)) els.manualCategory.value = target;
+    }
+
+    async function loadDatabaseState() {
+      try {
+        const response = await fetch("/api/state");
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Database unavailable.");
+
+        applyState(result.state);
+        databaseReady = true;
+        setEditingEnabled(true);
+        const recovery = readRecoveryDraft();
+        if (recovery && confirm(`A local recovery copy from ${formatRecoveryTime(recovery.savedAt)} was found. Restore it now?`)) {
+          applyState(recovery.state);
+          renderAll();
+          await saveDatabaseState();
+          setStatus("Restored the local recovery copy and saved it to MongoDB.");
+          return;
+        }
+        if (recovery) clearRecoveryDraft();
+        await maybeMigrateLegacyBrowserState();
+        setStatus("Loaded saved MongoDB data. Edits are saved to MongoDB.");
+        renderAll();
+      } catch (error) {
+        databaseReady = false;
+        const recovery = readRecoveryDraft();
+        if (recovery) {
+          applyState(recovery.state);
+          setEditingEnabled(true);
+          setStatus(`MongoDB is unavailable. Loaded a local recovery copy from ${formatRecoveryTime(recovery.savedAt)}. Keep working; changes will stay in this browser until MongoDB reconnects.`);
+          renderAll();
+          return;
+        }
+        setEditingEnabled(false);
+        setStatus(`MongoDB is unavailable. Edits are disabled because there is no local recovery copy. ${error.message}`);
+      }
+    }
+
+    function saveDatabaseState() {
+      const state = currentState();
+      const version = saveVersion + 1;
+      saveVersion = version;
+      writeRecoveryDraft(state);
+
+      const saveOperation = async () => {
+        try {
+          const response = await fetch("/api/state", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ state })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "MongoDB save failed.");
+          if (version === saveVersion) applyState(result.state);
+          databaseReady = true;
+          setEditingEnabled(true);
+          clearLegacyBrowserState();
+          if (version === saveVersion) clearRecoveryDraft();
+          return true;
+        } catch (error) {
+          databaseReady = false;
+          setEditingEnabled(true);
+          setStatus(`MongoDB save failed. Your latest work is saved locally in this browser. Keep this tab open and try Backup or another edit after MongoDB reconnects. ${error.message}`);
+          return false;
+        }
+      };
+
+      const queuedSave = saveQueue.then(saveOperation, saveOperation);
+      saveQueue = queuedSave.catch(() => {});
+      return queuedSave;
+    }
+
+    async function backupDatabase() {
+      try {
+        const response = await fetch("/api/backup/export", { method: "POST" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Backup failed.");
+        setStatus(`MongoDB backup written to ${result.path}. Commit and push it to GitHub when ready.`);
+      } catch (error) {
+        setStatus(error.message);
+      }
+    }
+
+    async function aiMatchTransactions() {
+      const pending = transactions.filter((transaction) =>
+        !transaction.ignored && !hasSplits(transaction) && (!transaction.property || transaction.confidence === "Needs review")
+      );
+      const examples = transactions
+        .filter((transaction) =>
+          !transaction.ignored &&
+          !hasSplits(transaction) &&
+          transaction.property &&
+          transaction.category &&
+          transaction.confidence !== "Needs review"
+        )
+        .slice(-200);
+
+      if (!pending.length) {
+        setStatus("There are no transactions waiting for AI matching.");
+        return;
+      }
+
+      if (!examples.length) {
+        setStatus("Correct a few transactions first so AI has examples to learn from.");
+        return;
+      }
+
+      els.aiMatch.disabled = true;
+      setStatus("AI matching transactions from your saved history...");
+
+      try {
+        const response = await fetch("/api/ai-match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            properties,
+            categories,
+            examples: examples.map(aiTransactionPayload),
+            transactions: pending.slice(0, 80).map(aiTransactionPayload)
+          })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "AI matching failed.");
+        }
+
+        const byId = new Map((result.matches || []).map((match) => [match.id, match]));
+        let applied = 0;
+
+        transactions = transactions.map((transaction) => {
+          const match = byId.get(transaction.id);
+          if (!match || !match.property || !match.category) return transaction;
+
+          applied += 1;
+          return {
+            ...transaction,
+            property: properties.includes(match.property) ? match.property : transaction.property,
+            category: categories.includes(match.category) ? match.category : transaction.category,
+            confidence: `AI ${Math.round((Number(match.confidence) || 0.5) * 100)}%`,
+            source: match.reason || "AI history match"
+          };
+        });
+
+        persistTransactions();
+        setStatus(`AI matched ${applied} transaction${applied === 1 ? "" : "s"}. Review before exporting.`);
+        renderAll();
+      } catch (error) {
+        setStatus(error.message);
+      } finally {
+        els.aiMatch.disabled = false;
+      }
+    }
+
+    function saveCorrection(id, field, value) {
+      if (field === "property" && value === "__new_property__") {
+        const newProperty = prompt("New rental name");
+        if (!newProperty || !newProperty.trim()) {
+          renderTable();
+          return;
+        }
+        value = addProperty(newProperty);
+      }
+
+      if (field === "category" && value === "__new_category__") {
+        const newCategory = prompt("New category name");
+        if (!newCategory || !newCategory.trim()) {
+          renderTable();
+          return;
+        }
+        value = addCategory(newCategory);
+      }
+
+      transactions = transactions.map((transaction) => {
+        if (transaction.id !== id) return transaction;
+        const next = { ...transaction, [field]: value, ignored: false, splits: [], confidence: "Manual", source: "Manual correction" };
+        if (field === "billable") {
+          next.billable = Boolean(value);
+          if (!next.billable) {
+            next.property = "";
+            next.owner = "";
+            next.unit = "";
+          }
+        }
+        if (field === "property") {
+          next.owner = ownerForProperty(value);
+          next.unit = "";
+          if (appMode === "accounting" && value) next.billable = true;
+        }
+        return next;
+      });
+      persistTransactions();
+      renderAll();
+    }
+
+    function editTransaction(id) {
+      const transaction = transactions.find((item) => item.id === id);
+      if (!transaction) return;
+
+      editTransactionId = id;
+      els.editDate.value = dateInputValue(transaction.date);
+      els.editAmount.value = Math.abs(Number(transaction.amount || 0)).toFixed(2);
+      els.editDescription.value = transaction.description || "";
+      els.editType.value = transaction.type || (transaction.amount >= 0 ? "Deposit" : "Expense");
+      els.editIgnored.checked = Boolean(transaction.ignored);
+      const transactionOwner = transaction.owner || ownerForProperty(transaction.property);
+      els.editOwner.innerHTML = selectOptions(owners, transactionOwner, "Unassigned");
+      els.editOwner.value = owners.includes(transactionOwner) ? transactionOwner : "";
+      els.editProperty.innerHTML = selectOptions(propertiesForOwner(els.editOwner.value), transaction.property, "Unassigned");
+      els.editCategory.innerHTML = selectOptions(categories, transaction.category || "Uncategorized");
+      els.editProperty.value = transaction.property || "";
+      renderEditUnitOptions(transaction.unit || "");
+      els.editCategory.value = transaction.category || "Uncategorized";
+      els.editConfidence.value = transaction.confidence || "";
+      els.editSource.value = transaction.source || "";
+      const canAssignRental = appMode !== "accounting" || isBillableTransaction(transaction);
+
+      if (hasSplits(transaction)) {
+        editSplitDraftRows = transaction.splits.map((split) => ({
+          id: split.id || "",
+          amount: Math.abs(split.amount).toFixed(2),
+          owner: split.owner || ownerForProperty(split.property),
+          property: split.property || "",
+          unit: split.unit || "",
+          category: split.category && split.category !== "Ignored" ? split.category : "Uncategorized",
+          ignored: Boolean(split.ignored)
+        }));
+        els.editSplitsPanel.hidden = false;
+        els.editOwnerField.hidden = true;
+        els.editPropertyField.hidden = true;
+        els.editUnitField.hidden = true;
+        els.editCategoryField.hidden = true;
+        renderEditSplitRows();
+      } else {
+        editSplitDraftRows = [];
+        els.editSplitsPanel.hidden = true;
+        els.editOwnerField.hidden = !canAssignRental;
+        els.editPropertyField.hidden = !canAssignRental;
+        els.editUnitField.hidden = !canAssignRental;
+        els.editCategoryField.hidden = false;
+        els.editSplitTotal.textContent = "";
+      }
+
+      els.editError.textContent = "";
+      els.editModal.hidden = false;
+    }
+
+    function closeEditTransaction() {
+      editTransactionId = "";
+      editSplitDraftRows = [];
+      els.editModal.hidden = true;
+      els.editError.textContent = "";
+      els.saveEdit.disabled = false;
+    }
+
+    async function saveEditTransaction() {
+      const transaction = transactions.find((item) => item.id === editTransactionId);
+      if (!transaction) return;
+
+      const description = els.editDescription.value.trim();
+      const rawAmount = Math.abs(parseMoney(els.editAmount.value));
+      if (!els.editDate.value) {
+        els.editError.textContent = "Add a date.";
+        return;
+      }
+      if (!description) {
+        els.editError.textContent = "Add a description.";
+        return;
+      }
+      if (!rawAmount) {
+        els.editError.textContent = "Add an amount.";
+        return;
+      }
+
+      const type = els.editType.value;
+      const amount = type === "Expense" ? -rawAmount : rawAmount;
+      const ignored = els.editIgnored.checked;
+      let nextSplits = Array.isArray(transaction.splits) ? transaction.splits : [];
+
+      if (hasSplits(transaction)) {
+        const parsed = parseEditSplitDraftRows(transaction.id, rawAmount);
+        if (!parsed.ok) {
+          els.editError.textContent = parsed.error;
+          return;
+        }
+        nextSplits = parsed.splits;
+      } else {
+        nextSplits = [];
+      }
+
+      const canAssignRental = appMode !== "accounting" || isBillableTransaction(transaction);
+      const nextProperty = hasSplits(transaction) || !canAssignRental ? "" : els.editProperty.value;
+      const nextOwner = hasSplits(transaction) || !canAssignRental ? "" : els.editOwner.value || ownerForProperty(nextProperty);
+      const nextUnit = hasSplits(transaction) || !canAssignRental ? "" : els.editUnit.value;
+      const nextCategory = hasSplits(transaction) ? "Uncategorized" : els.editCategory.value || "Uncategorized";
+      const defaultConfidence = ignored ? "Ignored" : hasSplits(transaction) ? "Split" : (nextOwner || nextProperty) ? "Manual" : "Needs review";
+      const defaultSource = ignored ? "Edited by user" : hasSplits(transaction) ? "Split allocation" : "Manual correction";
+      const nextConfidence = els.editConfidence.value.trim() || defaultConfidence;
+      const nextSource = els.editSource.value.trim() || defaultSource;
+
+      els.saveEdit.disabled = true;
+      transactions = transactions.map((item) => {
+        if (item.id !== editTransactionId) return item;
+        return {
+          ...item,
+          date: formatManualDate(els.editDate.value),
+          description,
+          amount,
+          type,
+          owner: nextOwner,
+          property: nextProperty,
+          unit: nextUnit,
+          category: nextCategory,
+          ignored,
+          billable: appMode === "accounting" ? canAssignRental : item.billable,
+          splits: nextSplits,
+          confidence: nextConfidence,
+          source: nextSource
+        };
+      });
+
+      const saved = await saveDatabaseState();
+      els.saveEdit.disabled = false;
+      if (!saved) {
+        els.editError.textContent = "Transaction could not be saved because MongoDB is unavailable.";
+        return;
+      }
+
+      closeEditTransaction();
+      setStatus("Transaction edits saved.");
+      renderAll();
+    }
+
+    function renderEditSplitRows() {
+      els.editSplitRows.innerHTML = editSplitDraftRows.map((row, index) => `
+        <tr>
+          <td>
+            <input class="amount-input" data-edit-split-field="amount" data-edit-split-index="${index}" type="text" value="${escapeHtml(row.amount)}" placeholder="0.00">
+          </td>
+          <td>
+            <select data-edit-split-field="property" data-edit-split-index="${index}" ${row.ignored ? "disabled" : ""}>
+              ${selectOptions(properties, row.property, "Select rental")}
+            </select>
+          </td>
+          <td>
+            <select data-edit-split-field="unit" data-edit-split-index="${index}" ${row.ignored || !row.property ? "disabled" : ""}>
+              ${selectOptions(unitsForProperty(row.property), row.unit || "", "Whole rental")}
+            </select>
+          </td>
+          <td>
+            <select data-edit-split-field="category" data-edit-split-index="${index}" ${row.ignored ? "disabled" : ""}>
+              ${selectOptions(categories, row.category || "Uncategorized")}
+              <option value="__new_category__">+ Add new category...</option>
+            </select>
+          </td>
+          <td>
+            <label class="toggle-field">
+              <input data-edit-split-field="ignored" data-edit-split-index="${index}" type="checkbox" ${row.ignored ? "checked" : ""}>
+              Ignore
+            </label>
+          </td>
+          <td>
+            <button type="button" class="danger" data-remove-edit-split="${index}">Remove</button>
+          </td>
+        </tr>
+      `).join("");
+      updateEditSplitTotal();
+    }
+
+    function updateEditSplitDraftFromEvent(event) {
+      const target = event.target;
+      const field = target.dataset.editSplitField;
+      if (!field) return;
+
+      const index = Number(target.dataset.editSplitIndex);
+      if (!editSplitDraftRows[index]) return;
+      if (field === "category" && handleNewSplitCategory(editSplitDraftRows, index, target, renderEditSplitRows)) return;
+      editSplitDraftRows[index] = {
+        ...editSplitDraftRows[index],
+        [field]: field === "ignored" ? target.checked : target.value
+      };
+
+      if (field === "ignored" || field === "property") {
+        if (field === "property") {
+          editSplitDraftRows[index].owner = ownerForProperty(target.value);
+          editSplitDraftRows[index].unit = "";
+        }
+        renderEditSplitRows();
+      }
+      updateEditSplitTotal();
+    }
+
+    function updateEditSplitTotal() {
+      const expected = Math.abs(parseMoney(els.editAmount.value));
+      const actual = roundCents(editSplitDraftRows.reduce((sum, row) => sum + Math.abs(parseMoney(row.amount)), 0));
+      els.editSplitTotal.innerHTML = `Split total: <strong>${formatMoney(actual)}</strong> / ${formatMoney(expected)}`;
+    }
+
+    function parseEditSplitDraftRows(transactionId, expectedAmount) {
+      if (!editSplitDraftRows.length) return { ok: false, error: "Add at least one split row." };
+
+      const splits = [];
+      for (let index = 0; index < editSplitDraftRows.length; index += 1) {
+        const row = editSplitDraftRows[index];
+        const amount = Math.abs(parseMoney(row.amount));
+        if (!amount) return { ok: false, error: `Split row ${index + 1} needs an amount.` };
+
+        if (row.ignored) {
+          splits.push({ id: row.id || `${transactionId}-split-${index}`, amount, ignored: true, property: "", category: "Ignored" });
+          continue;
+        }
+
+        if (!row.property) return { ok: false, error: `Split row ${index + 1} needs a rental selection.` };
+        splits.push({
+          id: row.id || `${transactionId}-split-${index}`,
+          amount,
+          ignored: false,
+          owner: ownerForProperty(row.property),
+          property: row.property,
+          unit: row.unit || "",
+          category: row.category || "Uncategorized"
+        });
+      }
+
+      const expected = roundCents(expectedAmount);
+      const actual = roundCents(splits.reduce((sum, split) => sum + split.amount, 0));
+      if (actual !== expected) {
+        return { ok: false, error: `Split total is ${formatMoney(actual)}, but transaction total is ${formatMoney(expected)}.` };
+      }
+
+      return { ok: true, splits };
+    }
+
+    function defaultEditSplitDraftRow() {
+      return {
+        id: "",
+        amount: "",
+        owner: ownerForProperty(properties[0] || ""),
+        property: properties[0] || "",
+        unit: "",
+        category: categories.includes("Uncategorized") ? "Uncategorized" : categories[0] || "",
+        ignored: false
+      };
+    }
+
+    function splitTransaction(id) {
+      const transaction = transactions.find((item) => item.id === id);
+      if (!transaction) return;
+
+      splitEditingId = id;
+      splitDraftRows = hasSplits(transaction)
+        ? transaction.splits.map((split) => ({
+          amount: Math.abs(split.amount).toFixed(2),
+          owner: split.owner || ownerForProperty(split.property),
+          property: split.property || "",
+          unit: split.unit || "",
+          category: split.category && split.category !== "Ignored" ? split.category : "Uncategorized",
+          ignored: Boolean(split.ignored)
+        }))
+        : [{
+          amount: Math.abs(transaction.amount).toFixed(2),
+          owner: transaction.owner || ownerForProperty(transaction.property),
+          property: transaction.property || properties[0] || "",
+          unit: transaction.unit || "",
+          category: transaction.category || "Uncategorized",
+          ignored: false
+        }];
+
+      els.splitDescription.textContent = `${transaction.date} - ${transaction.description}`;
+      els.splitExpectedTotal.textContent = `Total: ${formatMoney(Math.abs(transaction.amount))}`;
+      els.splitModal.hidden = false;
+      renderSplitRows();
+    }
+
+    function closeSplitEditor() {
+      splitEditingId = "";
+      splitDraftRows = [];
+      els.splitModal.hidden = true;
+      els.splitError.textContent = "";
+    }
+
+    async function saveSplitEditor() {
+      const transaction = transactions.find((item) => item.id === splitEditingId);
+      if (!transaction) return;
+
+      const parsed = parseSplitDraftRows(transaction);
+      if (!parsed.ok) {
+        els.splitError.textContent = parsed.error;
+        return;
+      }
+
+      els.saveSplit.disabled = true;
+      transactions = transactions.map((item) => {
+        if (item.id !== splitEditingId) return item;
+        return {
+          ...item,
+          ignored: false,
+          splits: parsed.splits,
+          property: "",
+          category: "Uncategorized",
+          confidence: "Split",
+          source: "Split allocation"
+        };
+      });
+      const saved = await saveDatabaseState();
+      els.saveSplit.disabled = false;
+      if (!saved) {
+        els.splitError.textContent = "Split could not be saved because MongoDB is unavailable.";
+        return;
+      }
+      closeSplitEditor();
+      setStatus("Split transaction saved.");
+      renderAll();
+    }
+
+    function defaultSplitDraftRow() {
+      return {
+        amount: "",
+        owner: ownerForProperty(properties[0] || ""),
+        property: properties[0] || "",
+        unit: "",
+        category: categories.includes("Uncategorized") ? "Uncategorized" : categories[0] || "",
+        ignored: false
+      };
+    }
+
+    function renderSplitRows() {
+      els.splitRows.innerHTML = splitDraftRows.map((row, index) => `
+        <tr>
+          <td>
+            <input class="amount-input" data-split-field="amount" data-split-index="${index}" type="text" value="${escapeHtml(row.amount)}" placeholder="0.00">
+          </td>
+          <td>
+            <select data-split-field="property" data-split-index="${index}" ${row.ignored ? "disabled" : ""}>
+              <option value="">Select rental</option>
+              ${properties.map((property) => optionTemplate(property, row.property)).join("")}
+            </select>
+          </td>
+          <td>
+            <select data-split-field="unit" data-split-index="${index}" ${row.ignored || !row.property ? "disabled" : ""}>
+              ${selectOptions(unitsForProperty(row.property), row.unit || "", "Whole rental")}
+            </select>
+          </td>
+          <td>
+            <select data-split-field="category" data-split-index="${index}" ${row.ignored ? "disabled" : ""}>
+              ${categories.map((category) => optionTemplate(category, row.category)).join("")}
+              <option value="__new_category__">+ Add new category...</option>
+            </select>
+          </td>
+          <td>
+            <label class="toggle-field">
+              <input data-split-field="ignored" data-split-index="${index}" type="checkbox" ${row.ignored ? "checked" : ""}>
+              Ignore
+            </label>
+          </td>
+          <td>
+            <button type="button" class="danger" data-remove-split="${index}">Remove</button>
+          </td>
+        </tr>
+      `).join("");
+      updateSplitTotal();
+    }
+
+    function updateSplitDraftFromEvent(event) {
+      const target = event.target;
+      const field = target.dataset.splitField;
+      if (!field) return;
+
+      const index = Number(target.dataset.splitIndex);
+      if (!splitDraftRows[index]) return;
+      if (field === "category" && handleNewSplitCategory(splitDraftRows, index, target, renderSplitRows)) return;
+      splitDraftRows[index] = {
+        ...splitDraftRows[index],
+        [field]: field === "ignored" ? target.checked : target.value
+      };
+
+      if (field === "ignored" || field === "property") {
+        if (field === "property") {
+          splitDraftRows[index].owner = ownerForProperty(target.value);
+          splitDraftRows[index].unit = "";
+        }
+        renderSplitRows();
+      }
+      updateSplitTotal();
+    }
+
+    function handleNewSplitCategory(draftRows, index, target, renderRows) {
+      if (target.value !== "__new_category__") return false;
+
+      const previousCategory = draftRows[index].category || "Uncategorized";
+      const newCategory = prompt("New category name");
+      if (!newCategory || !newCategory.trim()) {
+        target.value = previousCategory;
+        renderRows();
+        return true;
+      }
+
+      const savedCategory = addCategory(newCategory);
+      draftRows[index] = { ...draftRows[index], category: savedCategory };
+      target.value = savedCategory;
+      renderRows();
+      setStatus(`Added category "${savedCategory}". It is selected for this split.`);
+      return true;
+    }
+
+    function updateSplitTotal() {
+      const transaction = transactions.find((item) => item.id === splitEditingId);
+      const expected = transaction ? roundCents(Math.abs(transaction.amount)) : 0;
+      const actual = roundCents(splitDraftRows.reduce((sum, row) => sum + Math.abs(parseMoney(row.amount)), 0));
+      els.splitTotal.innerHTML = `Split total: <strong>${formatMoney(actual)}</strong> / ${formatMoney(expected)}`;
+      els.splitError.textContent = actual === expected ? "" : els.splitError.textContent;
+    }
+
+    function parseSplitDraftRows(transaction) {
+      if (!splitDraftRows.length) return { ok: false, error: "Add at least one split row." };
+
+      const splits = [];
+      for (let index = 0; index < splitDraftRows.length; index += 1) {
+        const row = splitDraftRows[index];
+        const amount = Math.abs(parseMoney(row.amount));
+        if (!amount) return { ok: false, error: `Row ${index + 1} needs an amount.` };
+
+        if (row.ignored) {
+          splits.push({ id: `${transaction.id}-split-${index}`, amount, ignored: true, property: "", category: "Ignored" });
+          continue;
+        }
+
+        if (!row.property) return { ok: false, error: `Row ${index + 1} needs a rental selection.` };
+        const category = row.category || "Uncategorized";
+        splits.push({
+          id: `${transaction.id}-split-${index}`,
+          amount,
+          ignored: false,
+          owner: ownerForProperty(row.property),
+          property: row.property,
+          unit: row.unit || "",
+          category
+        });
+      }
+
+      const expected = roundCents(Math.abs(transaction.amount));
+      const actual = roundCents(splits.reduce((sum, split) => sum + split.amount, 0));
+      if (actual !== expected) {
+        return { ok: false, error: `Split total is ${formatMoney(actual)}, but transaction total is ${formatMoney(expected)}.` };
+      }
+
+      return { ok: true, splits };
+    }
+
+    function clearSplit(id) {
+      transactions = transactions.map((transaction) => {
+        if (transaction.id !== id) return transaction;
+        return {
+          ...transaction,
+          splits: [],
+          confidence: transaction.property ? "Manual" : "Needs review",
+          source: ""
+        };
+      });
+      persistTransactions();
+      renderAll();
+    }
+
+    function toggleIgnored(id) {
+      transactions = transactions.map((transaction) => {
+        if (transaction.id !== id) return transaction;
+        const ignored = !transaction.ignored;
+        return {
+          ...transaction,
+          ignored,
+          property: ignored ? "" : transaction.property,
+          category: ignored ? "Uncategorized" : transaction.category,
+          confidence: ignored ? "Ignored" : hasSplits(transaction) ? "Split" : "Needs review",
+          source: ignored ? "Ignored by user" : hasSplits(transaction) ? "Split allocation" : ""
+        };
+      });
+      persistTransactions();
+      renderAll();
+    }
+
+    function renderAll() {
+      renderModeChrome();
+      renderFilters();
+      renderManualOptions();
+      renderRentalList();
+      updatePlaidStatus();
+      renderPlaidAccounts();
+      renderSummary();
+      renderTable();
+    }
+
+    function renderModeChrome() {
+      els.rentalTab.setAttribute("aria-selected", String(appMode === "rental"));
+      els.accountingTab.setAttribute("aria-selected", String(appMode === "accounting"));
+      els.rentalSummaryPanel.classList.toggle("is-hidden", appMode === "accounting");
+      els.exportCsv.textContent = appMode === "accounting" ? "Export Accounting CSV" : "Export CSV";
+      els.clearTransactions.textContent = appMode === "accounting" ? "Clear Accounting" : "Clear Transactions";
+      els.connectPlaid.textContent = appMode === "accounting" ? "Connect Accounting Bank" : "Connect Bank";
+      els.syncPlaid.textContent = appMode === "accounting" ? "Sync Accounting Plaid" : "Sync Plaid";
+    }
+
+    function renderManualOptions() {
+      normalizePropertyDetails();
+      const currentOwner = els.manualOwner.value;
+      const currentProperty = els.manualProperty.value;
+      const currentCategory = els.manualCategory.value;
+
+      els.manualOwner.innerHTML = selectOptions(owners, currentOwner, "Unassigned");
+      els.manualOwner.value = owners.includes(currentOwner) ? currentOwner : "";
+
+      const availableProperties = propertiesForOwner(els.manualOwner.value);
+      els.manualProperty.innerHTML = [
+        `<option value="">Unassigned</option>`,
+        ...availableProperties.map((property) => optionTemplate(property, currentProperty))
+      ].join("");
+      els.manualProperty.value = availableProperties.includes(currentProperty) ? currentProperty : "";
+      renderManualUnitOptions();
+
+      els.manualCategory.innerHTML = categories.map((category) => optionTemplate(category, currentCategory)).join("");
+      if (categories.includes(currentCategory)) {
+        els.manualCategory.value = currentCategory;
+      } else {
+        updateManualCategoryDefault();
+      }
+    }
+
+    function renderManualUnitOptions() {
+      const currentUnit = els.manualUnit.value;
+      const units = unitsForProperty(els.manualProperty.value);
+      els.manualUnit.innerHTML = selectOptions(units, currentUnit, "Whole rental");
+      els.manualUnit.value = units.includes(currentUnit) ? currentUnit : "";
+    }
+
+    function syncManualOwnerFromProperty() {
+      const owner = ownerForProperty(els.manualProperty.value);
+      if (owner) els.manualOwner.value = owner;
+    }
+
+    function renderEditPropertyOptions() {
+      const currentProperty = els.editProperty.value;
+      const availableProperties = propertiesForOwner(els.editOwner.value);
+      els.editProperty.innerHTML = selectOptions(availableProperties, currentProperty, "Unassigned");
+      els.editProperty.value = availableProperties.includes(currentProperty) ? currentProperty : "";
+      renderEditUnitOptions();
+    }
+
+    function renderEditUnitOptions(selectedUnit = els.editUnit.value) {
+      const units = unitsForProperty(els.editProperty.value);
+      els.editUnit.innerHTML = selectOptions(units, selectedUnit, "Whole rental");
+      els.editUnit.value = units.includes(selectedUnit) ? selectedUnit : "";
+    }
+
+    function syncEditOwnerFromProperty() {
+      const owner = ownerForProperty(els.editProperty.value);
+      if (owner) els.editOwner.value = owner;
+    }
+
+    function renderRentalList() {
+      normalizePropertyDetails();
+      if (!properties.length) {
+        els.rentalList.innerHTML = `<div class="hint">No rentals saved yet.</div>`;
+        return;
+      }
+
+      els.rentalList.innerHTML = properties.map((property) => {
+        const details = propertyDetails[property] || { owner: "", units: [] };
+        const meta = [
+          details.owner ? `Owner: ${details.owner}` : "No owner",
+          details.units.length ? `Units: ${details.units.join(", ")}` : "No units"
+        ].join(" | ");
+        return `
+          <div class="rental-row">
+            <span title="${escapeHtml(property)}">
+              ${escapeHtml(property)}
+              <div class="rental-meta">${escapeHtml(meta)}</div>
+            </span>
+          <button type="button" data-edit-rental="${escapeHtml(property)}" ${databaseReady ? "" : "disabled"}>Edit</button>
+          <button type="button" class="danger" data-delete-rental="${escapeHtml(property)}" ${databaseReady ? "" : "disabled"}>Delete</button>
+        </div>
+        `;
+      }).join("");
+
+      els.rentalList.querySelectorAll("[data-edit-rental]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          openRentalEditor(event.currentTarget.dataset.editRental);
+        });
+      });
+
+      els.rentalList.querySelectorAll("[data-delete-rental]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          deleteRental(event.currentTarget.dataset.deleteRental);
+        });
+      });
+    }
+
+    function renderFilters() {
+      const currentProperty = els.propertyFilter.value;
+      const currentMonth = els.monthFilter.value;
+      els.propertyFilter.innerHTML = [
+        `<option value="">All rentals</option>`,
+        `<option value="Unassigned">Unassigned</option>`,
+        ...properties.map((property) => `<option value="${escapeHtml(property)}">${escapeHtml(property)}</option>`)
+      ].join("");
+      els.propertyFilter.value = currentProperty;
+
+      const months = transactionMonthOptions();
+      els.monthFilter.innerHTML = [
+        `<option value="">All months</option>`,
+        ...months.map((month) => `<option value="${escapeHtml(month.key)}">${escapeHtml(month.label)}</option>`)
+      ].join("");
+      els.monthFilter.value = months.some((month) => month.key === currentMonth) ? currentMonth : "";
+    }
+
+    function renderTable() {
+      const visible = filteredTransactions();
+      updateStats();
+
+      if (!transactions.length) {
+        els.tableMount.innerHTML = `<div class="empty">Upload a CSV statement to start sorting transactions.</div>`;
+        return;
+      }
+
+      if (!visible.length) {
+        els.tableMount.innerHTML = `<div class="empty">No transactions match the current filters.</div>`;
+        return;
+      }
+
+      els.tableMount.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th class="amount">Amount</th>
+              <th>Rental</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Source</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visible.map(rowTemplate).join("")}
+          </tbody>
+        </table>
+      `;
+
+      els.tableMount.querySelectorAll("[data-edit]").forEach((input) => {
+        input.addEventListener("change", (event) => {
+          const target = event.currentTarget;
+          saveCorrection(target.dataset.id, target.dataset.edit, target.type === "checkbox" ? target.checked : target.value);
+        });
+      });
+
+      els.tableMount.querySelectorAll("[data-action='ignore']").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          toggleIgnored(event.currentTarget.dataset.id);
+        });
+      });
+      els.tableMount.querySelectorAll("[data-action='edit']").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          editTransaction(event.currentTarget.dataset.id);
+        });
+      });
+      els.tableMount.querySelectorAll("[data-action='split']").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          splitTransaction(event.currentTarget.dataset.id);
+        });
+      });
+      els.tableMount.querySelectorAll("[data-action='clear-split']").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          clearSplit(event.currentTarget.dataset.id);
+        });
+      });
+    }
+
+    function rowTemplate(transaction) {
+      const split = hasSplits(transaction);
+      const accountingRow = appMode === "accounting";
+      const billable = isBillableTransaction(transaction);
+      const statusClass = transaction.ignored
+        ? "uncertain"
+        : transaction.confidence === "Needs review"
+          ? "uncertain"
+          : "";
+      return `
+        <tr class="${transaction.ignored ? "ignored-row" : ""}">
+          <td>${escapeHtml(transaction.date)}</td>
+          <td>${escapeHtml(transaction.description)}${split ? splitSummary(transaction) : ""}</td>
+          <td><span class="pill ${transaction.type === "Deposit" ? "deposit" : "expense"}">${transaction.type}</span></td>
+          <td class="amount ${transaction.amount >= 0 ? "positive" : "negative"}">
+            ${formatMoney(transaction.amount)}
+            ${accountingRow ? `
+              <label class="billable-control">
+                <input type="checkbox" data-edit="billable" data-id="${transaction.id}" ${billable ? "checked" : ""} ${transaction.ignored || split ? "disabled" : ""}>
+                Billable
+              </label>
+            ` : ""}
+          </td>
+          <td>
+            ${accountingRow && !billable ? `<span class="company-pl">Property company P&amp;L</span>` : `
+              <select data-edit="property" data-id="${transaction.id}" ${transaction.ignored || split ? "disabled" : ""}>
+                <option value="">Assign rental</option>
+                ${properties.map((property) => optionTemplate(property, transaction.property)).join("")}
+                <option value="__new_property__">+ Add new rental...</option>
+              </select>
+              ${transaction.owner || transaction.unit ? `<span class="split-note">${escapeHtml([transaction.owner, transaction.unit].filter(Boolean).join(" / "))}</span>` : ""}
+            `}
+          </td>
+          <td>
+            <select data-edit="category" data-id="${transaction.id}" ${transaction.ignored || split ? "disabled" : ""}>
+              ${categories.map((category) => optionTemplate(category, transaction.category)).join("")}
+              <option value="__new_category__">+ Add new category...</option>
+            </select>
+          </td>
+          <td><span class="pill ${statusClass}">${escapeHtml(transaction.confidence)}</span></td>
+          <td>${transaction.source ? escapeHtml(transaction.source) : ""}</td>
+          <td>
+            <button type="button" data-action="edit" data-id="${transaction.id}">Edit</button>
+            <button type="button" data-action="split" data-id="${transaction.id}">${split ? "Edit Split" : "Split"}</button>
+            ${split ? `<button type="button" data-action="clear-split" data-id="${transaction.id}">Clear Split</button>` : ""}
+            <button type="button" data-action="ignore" data-id="${transaction.id}">${transaction.ignored ? "Unignore" : "Ignore"}</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    function optionTemplate(value, selectedValue) {
+      return `<option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(value)}</option>`;
+    }
+
+    function selectOptions(values, selectedValue, emptyLabel = "") {
+      const options = [];
+      if (emptyLabel) options.push(`<option value="">${escapeHtml(emptyLabel)}</option>`);
+      if (selectedValue && !values.includes(selectedValue)) {
+        options.push(optionTemplate(selectedValue, selectedValue));
+      }
+      return [
+        ...options,
+        ...values.map((value) => optionTemplate(value, selectedValue))
+      ].join("");
+    }
+
+    function parseSplits(input, transaction) {
+      const lines = input.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      if (!lines.length) return { ok: false, error: "Add at least one split line." };
+
+      const splits = [];
+      for (let index = 0; index < lines.length; index += 1) {
+        const parts = lines[index].split("|").map((part) => part.trim());
+        const amount = Math.abs(parseMoney(parts[0]));
+        if (!amount) return { ok: false, error: `Line ${index + 1} needs an amount.` };
+
+        if ((parts[1] || "").toLowerCase() === "ignore") {
+          splits.push({ id: `${transaction.id}-split-${index}`, amount, ignored: true, property: "", category: "Ignored" });
+          continue;
+        }
+
+        const property = parts[1] || "";
+        const category = parts[2] || "Uncategorized";
+        if (!property) return { ok: false, error: `Line ${index + 1} needs a rental name or "ignore".` };
+
+        const savedProperty = addProperty(property);
+        const savedCategory = addCategory(category);
+        splits.push({
+          id: `${transaction.id}-split-${index}`,
+          amount,
+          ignored: false,
+          property: savedProperty,
+          category: savedCategory
+        });
+      }
+
+      const expected = roundCents(Math.abs(transaction.amount));
+      const actual = roundCents(splits.reduce((sum, split) => sum + split.amount, 0));
+      if (actual !== expected) {
+        return { ok: false, error: `Split total is ${formatMoney(actual)}, but transaction total is ${formatMoney(expected)}.` };
+      }
+
+      return { ok: true, splits };
+    }
+
+    function hasSplits(transaction) {
+      return Array.isArray(transaction.splits) && transaction.splits.length > 0;
+    }
+
+    function splitSummary(transaction) {
+      const lines = transaction.splits.map((split) => {
+        const location = [split.property || "Unassigned", split.unit].filter(Boolean).join(" / ");
+        const label = split.ignored ? "Ignored" : `${location} / ${split.category}`;
+        return `${formatMoney(signedSplitAmount(transaction, split.amount))} ${label}`;
+      });
+      return `<span class="split-note">${lines.map(escapeHtml).join("<br>")}</span>`;
+    }
+
+    function signedSplitAmount(transaction, amount) {
+      return transaction.amount < 0 ? -Math.abs(amount) : Math.abs(amount);
+    }
+
+    function transactionAllocations(transaction) {
+      if (transaction.ignored) return [];
+      if (!hasSplits(transaction)) return [transaction];
+
+      return transaction.splits
+        .filter((split) => !split.ignored)
+        .map((split) => ({
+          id: split.id,
+          originalId: transaction.id,
+        date: transaction.date,
+        description: transaction.description,
+        amount: signedSplitAmount(transaction, split.amount),
+        type: transaction.type,
+        owner: split.owner || ownerForProperty(split.property) || transaction.owner || "",
+        property: split.property,
+        unit: split.unit || "",
+        category: split.category,
+          confidence: "Split",
+          source: "Split allocation",
+          ignored: false
+        }));
+    }
+
+    function roundCents(value) {
+      return Math.round(Number(value || 0) * 100) / 100;
+    }
+
+    function filteredTransactions() {
+      const query = normalizeText(els.search.value);
+      const property = els.propertyFilter.value;
+      const month = els.monthFilter.value;
+      const type = els.typeFilter.value;
+      const review = els.reviewFilter.value;
+      const dateSort = els.dateSort.value;
+      const showIgnored = els.showIgnored.checked;
+
+      const visible = transactions
+        .map((transaction, index) => ({ transaction, index }))
+        .filter(({ transaction }) => {
+          const haystack = normalizeText(`${transaction.description} ${transaction.owner} ${transaction.property} ${transaction.unit} ${transaction.category}`);
+          const transactionMonth = monthKey(transaction.date).key;
+          const ignoredMatches = review === "ignored" ? transaction.ignored : showIgnored || !transaction.ignored;
+          const propertyMatches = !property ||
+            (property === "Unassigned" ? !transaction.property : transaction.property === property);
+          const monthMatches = !month || transactionMonth === month;
+          const reviewMatches = !review ||
+            review === "ignored" ||
+            (review === "review"
+              ? transaction.confidence === "Needs review"
+              : review === "ai"
+                ? transaction.confidence.startsWith("AI ")
+                : transaction.confidence === "Manual");
+          return (!query || haystack.includes(query)) &&
+            ignoredMatches &&
+            propertyMatches &&
+            monthMatches &&
+            (!type || transaction.type === type) &&
+            reviewMatches;
+        });
+
+      if (dateSort !== "none") {
+        visible.sort((a, b) => {
+          const dateA = transactionDateValue(a.transaction);
+          const dateB = transactionDateValue(b.transaction);
+          if (dateA !== dateB) return dateSort === "asc" ? dateA - dateB : dateB - dateA;
+          return a.index - b.index;
+        });
+      }
+
+      return visible.map((item) => item.transaction);
+    }
+
+    function transactionDateValue(transaction) {
+      const parsed = parseDateParts(transaction.date);
+      if (!parsed) return 0;
+      return new Date(Number(parsed.year), Number(parsed.month) - 1, Number(parsed.day || 1)).getTime();
+    }
+
+    function transactionMonthOptions() {
+      const byKey = new Map();
+      transactions.forEach((transaction) => {
+        const month = monthKey(transaction.date);
+        if (month.key === "unknown") return;
+        byKey.set(month.key, month);
+      });
+      return Array.from(byKey.values()).sort((a, b) => b.sort.localeCompare(a.sort));
+    }
+
+    function toggleMortgageSummary() {
+      excludeMortgageFromSummary = !excludeMortgageFromSummary;
+      renderSummary();
+    }
+
+    function toggleCapitalImprovementSummary() {
+      excludeCapitalImprovementFromSummary = !excludeCapitalImprovementFromSummary;
+      renderSummary();
+    }
+
+    function renderSummary() {
+      if (appMode === "accounting") {
+        updateStats();
+        return;
+      }
+      els.toggleMortgageSummary.setAttribute("aria-pressed", String(excludeMortgageFromSummary));
+      els.toggleMortgageSummary.textContent = excludeMortgageFromSummary ? "Include Mortgage" : "Exclude Mortgage";
+      els.toggleCapitalImprovementSummary.setAttribute("aria-pressed", String(excludeCapitalImprovementFromSummary));
+      els.toggleCapitalImprovementSummary.textContent = excludeCapitalImprovementFromSummary ? "Include Capital Improvement" : "Exclude Capital Improvement";
+
+      const activeTransactions = summaryAllocations();
+
+      if (!activeTransactions.length) {
+        els.summary.innerHTML = `<div class="empty">Monthly P&amp;L totals will appear after you import or add transactions.</div>`;
+        updateStats();
+        return;
+      }
+
+      els.summary.innerHTML = excelProfitLossTemplate(yearlyProfitLossData(activeTransactions));
+      updateStats();
+    }
+
+    function yearlyProfitLossData(activeTransactions) {
+      const years = new Map();
+
+      activeTransactions.forEach((transaction) => {
+        const parsed = parseDateParts(transaction.date);
+        if (!parsed) return;
+        const year = String(parsed.year);
+        const monthIndex = Number(parsed.month) - 1;
+        const property = transaction.property || "Unassigned";
+        const category = transaction.category || "Uncategorized";
+        const amount = Number(transaction.amount || 0);
+        const bucketType = amount >= 0 ? "income" : "expense";
+        const amountValue = Math.abs(amount);
+
+        if (!years.has(year)) {
+          years.set(year, { year, properties: new Map() });
+        }
+        const yearBucket = years.get(year);
+        if (!yearBucket.properties.has(property)) {
+          yearBucket.properties.set(property, { income: new Map(), expense: new Map() });
+        }
+        const propertyBucket = yearBucket.properties.get(property);
+        const categoryMap = propertyBucket[bucketType];
+        if (!categoryMap.has(category)) {
+          categoryMap.set(category, Array(12).fill(0));
+        }
+        categoryMap.get(category)[monthIndex] += amountValue;
+      });
+
+      return Array.from(years.values()).sort((a, b) => b.year.localeCompare(a.year));
+    }
+
+    function excelProfitLossTemplate(years) {
+      return years.map((yearBucket) => `
+        <section>
+          <h3 class="year-title">${escapeHtml(yearBucket.year)} P&amp;L Properties</h3>
+          <div class="excel-pl-wrap">
+            <table class="excel-pl">
+              <thead>
+                <tr>
+                  <th class="label-cell"></th>
+                  ${monthNames().map((month) => `<th class="month-head">${month}</th>`).join("")}
+                  <th class="month-head">Total</th>
+                </tr>
+              </thead>
+               <tbody>
+                 ${excelPropertySections(yearBucket)}
+                 ${excelGlobalProfitLossSection(yearBucket)}
+               </tbody>
+            </table>
+          </div>
+        </section>
+      `).join("");
+    }
+
+    function excelPropertySections(yearBucket) {
+      const propertyNames = excelPropertyNames(yearBucket);
+      return propertyNames.map((property) => {
+        const bucket = yearBucket.properties.get(property) || { income: new Map(), expense: new Map() };
+        const incomeRows = excelCategoryRows(bucket.income, fallbackIncomeCategories(bucket.income));
+        const expenseRows = excelCategoryRows(bucket.expense, fallbackExpenseCategories(bucket.expense));
+        const incomeTotal = sumCategoryRows(incomeRows);
+        const expenseTotal = sumCategoryRows(expenseRows);
+        const profitLoss = incomeTotal.map((value, index) => value - expenseTotal[index]);
+
+        return `
+          <tr class="spacer-row">${emptyCells(14)}</tr>
+          <tr class="property-row"><td class="label-cell">${escapeHtml(property)}</td>${emptyCells(13)}</tr>
+          <tr class="section-row"><td class="label-cell">Income</td>${emptyCells(13)}</tr>
+          ${incomeRows.map((row) => excelAmountRow(row.label, row.months)).join("")}
+          ${excelAmountRow("Total", incomeTotal, "total-row")}
+          <tr class="spacer-row">${emptyCells(14)}</tr>
+          <tr class="section-row"><td class="label-cell">Expenses</td>${emptyCells(13)}</tr>
+          ${expenseRows.map((row) => excelAmountRow(row.label, row.months)).join("")}
+          ${excelAmountRow("Total", expenseTotal, "total-row")}
+          <tr class="spacer-row">${emptyCells(14)}</tr>
+          ${excelAmountRow("P/L", profitLoss, "pl-row")}
+        `;
+      }).join("");
+    }
+
+    function excelGlobalProfitLossSection(yearBucket) {
+      const businessBucket = { income: new Map(), expense: new Map() };
+      yearBucket.properties.forEach((propertyBucket) => {
+        mergeCategoryMonths(businessBucket.income, propertyBucket.income);
+        mergeCategoryMonths(businessBucket.expense, propertyBucket.expense);
+      });
+
+      const incomeRows = excelCategoryRows(businessBucket.income, fallbackIncomeCategories(businessBucket.income));
+      const expenseRows = excelCategoryRows(businessBucket.expense, fallbackExpenseCategories(businessBucket.expense));
+      const incomeTotal = sumCategoryRows(incomeRows);
+      const expenseTotal = sumCategoryRows(expenseRows);
+      const profitLoss = incomeTotal.map((value, index) => value - expenseTotal[index]);
+
+      return `
+        <tr class="global-spacer-row">${emptyCells(14)}</tr>
+        <tr class="global-title-row"><td colspan="14">Entire Business &mdash; Global P&amp;L</td></tr>
+        <tr class="global-section-row"><td class="label-cell">Income</td>${emptyCells(13)}</tr>
+        ${incomeRows.map((row) => excelAmountRow(row.label, row.months)).join("")}
+        ${excelAmountRow("Total Business Income", incomeTotal, "global-total-row")}
+        <tr class="spacer-row">${emptyCells(14)}</tr>
+        <tr class="global-section-row"><td class="label-cell">Expenses</td>${emptyCells(13)}</tr>
+        ${expenseRows.map((row) => excelAmountRow(row.label, row.months)).join("")}
+        ${excelAmountRow("Total Business Expenses", expenseTotal, "global-total-row")}
+        <tr class="spacer-row">${emptyCells(14)}</tr>
+        ${excelAmountRow("Global P/L", profitLoss, "global-pl-row")}
+      `;
+    }
+
+    function mergeCategoryMonths(targetMap, sourceMap) {
+      sourceMap.forEach((months, category) => {
+        if (!targetMap.has(category)) targetMap.set(category, Array(12).fill(0));
+        const targetMonths = targetMap.get(category);
+        months.forEach((value, index) => {
+          targetMonths[index] += value;
+        });
+      });
+    }
+
+    function excelPropertyNames(yearBucket) {
+      const names = new Set(properties);
+      yearBucket.properties.forEach((bucket, property) => names.add(property));
+      return Array.from(names).sort((a, b) => a.localeCompare(b));
+    }
+
+    function excelCategoryRows(categoryMap, fallbackCategories) {
+      const names = new Set(fallbackCategories);
+      categoryMap.forEach((months, category) => names.add(category));
+      return Array.from(names)
+        .sort((a, b) => a.localeCompare(b))
+        .map((label) => ({ label, months: categoryMap.get(label) || Array(12).fill(0) }));
+    }
+
+    function fallbackIncomeCategories(categoryMap) {
+      if (categoryMap.size) return [];
+      return categories.includes("Rent Income") ? ["Rent Income"] : [];
+    }
+
+    function fallbackExpenseCategories(categoryMap) {
+      if (categoryMap.size) return [];
+      return categories.includes("Uncategorized") ? ["Uncategorized"] : [];
+    }
+
+    function sumCategoryRows(rows) {
+      return rows.reduce((sum, row) => sum.map((value, index) => value + row.months[index]), Array(12).fill(0));
+    }
+
+    function excelAmountRow(label, months, rowClass = "") {
+      const total = months.reduce((sum, value) => sum + value, 0);
+      return `
+        <tr class="${rowClass}">
+          <td class="label-cell">${escapeHtml(label)}</td>
+          ${months.map((value) => `<td class="number-cell">${formatAccounting(value)}</td>`).join("")}
+          <td class="number-cell">${formatAccounting(total)}</td>
+        </tr>
+      `;
+    }
+
+    function emptyCells(count) {
+      return Array.from({ length: count }, () => "<td></td>").join("");
+    }
+
+    function monthNames() {
+      return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    }
+
+    function formatAccounting(value) {
+      const rounded = roundCents(value);
+      if (!rounded) return "$-";
+      const formatted = formatMoney(Math.abs(rounded));
+      return rounded < 0 ? `$(${formatted.replace("$", "")})` : formatted;
+    }
+
+    function summaryAllocations() {
+      const allocations = transactions.flatMap(transactionAllocations);
+      return allocations.filter((transaction) => {
+        const category = normalizeText(transaction.category);
+        if (excludeMortgageFromSummary && category === "mortgage") return false;
+        if (excludeCapitalImprovementFromSummary && category === "capital improvement") return false;
+        return true;
+      });
+    }
+
+    function monthlyProfitLossData(activeTransactions) {
+      const months = new Map();
+
+      activeTransactions.forEach((transaction) => {
+        const month = monthKey(transaction.date);
+        const property = transaction.property || "Unassigned";
+        if (!months.has(month.key)) {
+          months.set(month.key, { label: month.label, shortLabel: month.shortLabel, sort: month.sort, properties: new Map() });
+        }
+        const monthBucket = months.get(month.key);
+        if (!monthBucket.properties.has(property)) {
+          monthBucket.properties.set(property, { income: 0, expense: 0, categories: new Map() });
+        }
+        const bucket = monthBucket.properties.get(property);
+        const category = transaction.category || "Uncategorized";
+        if (!bucket.categories.has(category)) {
+          bucket.categories.set(category, { income: 0, expense: 0 });
+        }
+        const categoryBucket = bucket.categories.get(category);
+        if (transaction.amount >= 0) {
+          bucket.income += transaction.amount;
+          categoryBucket.income += transaction.amount;
+        } else {
+          const expense = Math.abs(transaction.amount);
+          bucket.expense += expense;
+          categoryBucket.expense += expense;
+        }
+      });
+
+      return months;
+    }
+
+    function profitLossChartsTemplate(monthsDescending) {
+      const monthsAscending = [...monthsDescending].sort((a, b) => a.sort.localeCompare(b.sort));
+      const propertyNames = chartPropertyNames(monthsAscending);
+      const chartSeries = [
+        {
+          title: "Company Total",
+          rows: monthsAscending.map((month) => totalMonthRow(month))
+        },
+        ...propertyNames.map((property) => ({
+          title: property,
+          rows: monthsAscending.map((month) => propertyMonthRow(month, property))
+        }))
+      ];
+      const maxAbsNet = Math.max(
+        1,
+        ...chartSeries.flatMap((series) => series.rows.map((row) => Math.abs(row.net)))
+      );
+
+      return `
+        <div class="chart-grid">
+          ${chartSeries.map((series) => profitLossChartTemplate(series, maxAbsNet)).join("")}
+        </div>
+      `;
+    }
+
+    function chartPropertyNames(months) {
+      const names = new Set(properties);
+      months.forEach((month) => {
+        month.properties.forEach((totals, property) => {
+          if (totals.income || totals.expense) names.add(property);
+        });
+      });
+      return Array.from(names).sort((a, b) => a.localeCompare(b));
+    }
+
+    function totalMonthRow(month) {
+      const totals = Array.from(month.properties.values()).reduce((sum, row) => ({
+        income: sum.income + row.income,
+        expense: sum.expense + row.expense
+      }), { income: 0, expense: 0 });
+      return {
+        label: month.shortLabel,
+        income: totals.income,
+        expense: totals.expense,
+        net: totals.income - totals.expense
+      };
+    }
+
+    function propertyMonthRow(month, property) {
+      const totals = month.properties.get(property) || { income: 0, expense: 0, categories: new Map() };
+      return {
+        label: month.shortLabel,
+        income: totals.income,
+        expense: totals.expense,
+        net: totals.income - totals.expense
+      };
+    }
+
+    function profitLossChartTemplate(series, maxAbsNet) {
+      return `
+        <article class="pl-chart">
+          <h3>${escapeHtml(series.title)}</h3>
+          <div class="chart-bars">
+            ${series.rows.map((row) => chartMonthTemplate(row, maxAbsNet)).join("")}
+          </div>
+        </article>
+      `;
+    }
+
+    function chartMonthTemplate(row, maxAbsNet) {
+      const height = Math.max(3, Math.round((Math.abs(row.net) / maxAbsNet) * 50));
+      return `
+        <div class="chart-month">
+          <div class="bar-track" title="${escapeHtml(row.label)} net ${formatMoney(row.net)}">
+            <span class="net-bar ${row.net < 0 ? "negative-bar" : ""}" style="height:${height}px"></span>
+          </div>
+          <div class="chart-label">${escapeHtml(row.label)}</div>
+          <div class="chart-money">
+            <span class="positive">${formatMoney(row.income)}</span>
+            <span class="negative">${formatMoney(row.expense)}</span>
+            <strong class="${row.net >= 0 ? "positive" : "negative"}">${formatMoney(row.net)}</strong>
+          </div>
+        </div>
+      `;
+    }
+
+    function monthlyProfitLossTemplate(month) {
+      const rows = Array.from(month.properties.entries())
+        .map(([property, totals]) => ({ property, ...totals, net: totals.income - totals.expense }))
+        .filter((row) => row.income || row.expense)
+        .sort((a, b) => a.property.localeCompare(b.property));
+      const totals = rows.reduce((sum, row) => ({
+        income: sum.income + row.income,
+        expense: sum.expense + row.expense,
+        net: sum.net + row.net
+      }), { income: 0, expense: 0, net: 0 });
+
+      return `
+        <section class="pl-month">
+          <h3>${escapeHtml(month.label)}</h3>
+          <div class="table-wrap">
+            <table class="pl-table">
+              <thead>
+                <tr>
+                  <th>Rental</th>
+                  <th class="amount">Income</th>
+                  <th class="amount">Expenses</th>
+                  <th class="amount">Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map((row) => `
+                  <tr>
+                    <td>${categoryBreakdownTemplate(row)}</td>
+                    <td class="amount positive">${formatMoney(row.income)}</td>
+                    <td class="amount negative">${formatMoney(row.expense)}</td>
+                    <td class="amount ${row.net >= 0 ? "positive" : "negative"}">${formatMoney(row.net)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td class="amount positive">${formatMoney(totals.income)}</td>
+                  <td class="amount negative">${formatMoney(totals.expense)}</td>
+                  <td class="amount ${totals.net >= 0 ? "positive" : "negative"}">${formatMoney(totals.net)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    function categoryBreakdownTemplate(row) {
+      return `
+        <details class="pl-breakdown">
+          <summary>${escapeHtml(row.property)}</summary>
+          <div class="breakdown-grid">
+            ${categoryBreakdownGroupTemplate("Income", categoryBreakdownRows(row.categories, "income"), "positive")}
+            ${categoryBreakdownGroupTemplate("Expenses", categoryBreakdownRows(row.categories, "expense"), "negative")}
+          </div>
+        </details>
+      `;
+    }
+
+    function categoryBreakdownRows(categoriesMap, field) {
+      return Array.from((categoriesMap || new Map()).entries())
+        .map(([category, totals]) => ({ category, amount: totals[field] || 0 }))
+        .filter((row) => row.amount)
+        .sort((a, b) => b.amount - a.amount || a.category.localeCompare(b.category));
+    }
+
+    function categoryBreakdownGroupTemplate(title, rows, amountClass) {
+      return `
+        <div class="breakdown-group">
+          <h4>${escapeHtml(title)}</h4>
+          ${rows.length ? rows.map((row) => `
+            <div class="breakdown-line">
+              <span>${escapeHtml(row.category)}</span>
+              <strong class="${amountClass}">${formatMoney(row.amount)}</strong>
+            </div>
+          `).join("") : `
+            <div class="breakdown-line">
+              <span>None</span>
+              <strong>${formatMoney(0)}</strong>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function monthKey(value) {
+      const parsed = parseDateParts(value);
+      if (!parsed) return { key: "unknown", label: "Unknown Month", shortLabel: "Unknown", sort: "0000-00" };
+      const key = `${parsed.year}-${String(parsed.month).padStart(2, "0")}`;
+      const date = new Date(parsed.year, parsed.month - 1, 1);
+      return {
+        key,
+        label: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        shortLabel: date.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+        sort: key
+      };
+    }
+
+    function parseDateParts(value) {
+      const text = String(value || "").trim();
+      let match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (match) return { year: match[1], month: Number(match[2]), day: Number(match[3]) };
+      match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (match) return { year: match[3], month: Number(match[1]), day: Number(match[2]) };
+      const date = new Date(text);
+      if (Number.isNaN(date.getTime())) return null;
+      return { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() };
+    }
+
+    function updateStats() {
+      const activeTransactions = transactions.filter((transaction) => !transaction.ignored);
+      const allocations = transactions.flatMap(transactionAllocations);
+      const deposits = allocations.filter((t) => t.amount >= 0).reduce((sum, t) => sum + t.amount, 0);
+      const expenses = allocations.filter((t) => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      const review = activeTransactions.filter((t) => !hasSplits(t) && (!t.property || t.confidence === "Needs review")).length;
+
+      els.totalCount.textContent = String(activeTransactions.length);
+      els.depositTotal.textContent = formatMoney(deposits);
+      els.expenseTotal.textContent = formatMoney(expenses);
+      els.reviewCount.textContent = String(review);
+    }
+
+    function saveOwners() {
+      owners = uniqueNames(els.ownersInput.value
+        .split(/\r?\n/)
+        .map((owner) => owner.trim())
+        .filter(Boolean));
+      els.ownersInput.value = owners.join("\n");
+      normalizePropertyDetails();
+      transactions = transactions.map(normalizeTransactionHierarchy);
+      saveDatabaseState();
+      renderAll();
+    }
+
+    function saveProperties() {
+      properties = uniqueNames(els.propertiesInput.value
+        .split(/\r?\n/)
+        .map((property) => property.trim())
+        .filter(Boolean));
+      properties.forEach((property) => {
+        if (!propertyDetails[property]) propertyDetails[property] = { owner: "", units: [] };
+      });
+      Object.keys(propertyDetails).forEach((property) => {
+        if (!properties.includes(property)) delete propertyDetails[property];
+      });
+      transactions = transactions.map(normalizeTransactionHierarchy);
+      els.propertiesInput.value = properties.join("\n");
+      saveDatabaseState();
+      renderAll();
+    }
+
+    function addProperty(propertyName) {
+      const cleanName = propertyName.trim();
+      const existing = properties.find((property) => property.toLowerCase() === cleanName.toLowerCase());
+      if (existing) return existing;
+
+      properties.push(cleanName);
+      properties.sort((a, b) => a.localeCompare(b));
+      if (!propertyDetails[cleanName]) propertyDetails[cleanName] = { owner: "", units: [] };
+      els.propertiesInput.value = properties.join("\n");
+      saveDatabaseState();
+      return cleanName;
+    }
+
+    function openRentalEditor(propertyName) {
+      const existing = properties.find((property) => property === propertyName);
+      if (!existing) return;
+      normalizePropertyDetails();
+
+      const details = propertyDetails[existing] || { owner: "", units: [] };
+      editingRentalName = existing;
+      rentalEditorOwners = [...owners];
+      rentalEditorUnits = [...(details.units || [])];
+      els.rentalNameInput.value = existing;
+      els.newRentalOwnerInput.value = "";
+      els.newRentalUnitInput.value = "";
+      els.rentalError.textContent = "";
+      renderRentalOwnerOptions(details.owner || "");
+      renderRentalUnitOptions();
+      els.rentalModal.hidden = false;
+      els.rentalNameInput.focus();
+    }
+
+    function closeRentalEditor() {
+      editingRentalName = "";
+      rentalEditorOwners = [];
+      rentalEditorUnits = [];
+      els.rentalModal.hidden = true;
+      els.rentalError.textContent = "";
+      els.saveRentalEdit.disabled = false;
+    }
+
+    function renderRentalOwnerOptions(selectedOwner = els.rentalOwnerSelect.value) {
+      els.rentalOwnerSelect.innerHTML = selectOptions(rentalEditorOwners, selectedOwner, "Unassigned");
+      els.rentalOwnerSelect.value = rentalEditorOwners.includes(selectedOwner) ? selectedOwner : "";
+    }
+
+    function renderRentalUnitOptions(selectedUnit = els.rentalUnitSelect.value) {
+      els.rentalUnitSelect.innerHTML = selectOptions(rentalEditorUnits, selectedUnit, "No unit selected");
+      els.rentalUnitSelect.value = rentalEditorUnits.includes(selectedUnit) ? selectedUnit : "";
+      els.removeRentalUnit.disabled = !rentalEditorUnits.length;
+      els.rentalUnitList.innerHTML = rentalEditorUnits.length
+        ? rentalEditorUnits.map((unit) => `<span class="unit-chip">${escapeHtml(unit)}</span>`).join("")
+        : `<span class="hint">No units saved for this rental.</span>`;
+    }
+
+    function addOwnerFromRentalEditor() {
+      const ownerName = els.newRentalOwnerInput.value.trim();
+      if (!ownerName) return;
+      const existing = rentalEditorOwners.find((owner) => owner.toLowerCase() === ownerName.toLowerCase());
+      const finalOwner = existing || ownerName;
+      if (!existing) rentalEditorOwners = uniqueNames([...rentalEditorOwners, finalOwner]);
+      els.newRentalOwnerInput.value = "";
+      renderRentalOwnerOptions(finalOwner);
+    }
+
+    function addUnitFromRentalEditor() {
+      const unitName = els.newRentalUnitInput.value.trim();
+      if (!unitName) return;
+      const existing = rentalEditorUnits.find((unit) => unit.toLowerCase() === unitName.toLowerCase());
+      const finalUnit = existing || unitName;
+      rentalEditorUnits = uniqueNames([...rentalEditorUnits, finalUnit]);
+      els.newRentalUnitInput.value = "";
+      renderRentalUnitOptions(finalUnit);
+    }
+
+    function removeSelectedRentalUnit() {
+      const selectedUnit = els.rentalUnitSelect.value;
+      if (!selectedUnit) return;
+      rentalEditorUnits = rentalEditorUnits.filter((unit) => unit !== selectedUnit);
+      renderRentalUnitOptions();
+    }
+
+    async function saveRentalEditor() {
+      const existing = properties.find((property) => property === editingRentalName);
+      if (!existing) return closeRentalEditor();
+      if (els.newRentalOwnerInput.value.trim()) addOwnerFromRentalEditor();
+      if (els.newRentalUnitInput.value.trim()) addUnitFromRentalEditor();
+
+      const cleanName = els.rentalNameInput.value.trim();
+      if (!cleanName) {
+        els.rentalError.textContent = "Rental name is required.";
+        return;
+      }
+
+      const duplicate = properties.find((property) =>
+        property !== existing && property.toLowerCase() === cleanName.toLowerCase()
+      );
+      if (duplicate && !confirm(`"${duplicate}" already exists. Merge "${existing}" into "${duplicate}"?`)) return;
+
+      const finalName = duplicate || cleanName;
+      owners = uniqueNames(rentalEditorOwners);
+      const savedOwner = els.rentalOwnerSelect.value || "";
+      const savedUnits = uniqueNames(rentalEditorUnits);
+      properties = duplicate
+        ? properties.filter((property) => property !== existing)
+        : properties.map((property) => property === existing ? finalName : property);
+      properties = uniqueNames(properties);
+      propertyDetails[finalName] = { owner: savedOwner, units: savedUnits };
+      if (existing !== finalName) delete propertyDetails[existing];
+
+      mapAllTransactionBranches((transaction) => updateTransactionRentalDetails(transaction, existing, finalName, savedOwner, savedUnits));
+      els.ownersInput.value = owners.join("\n");
+      els.propertiesInput.value = properties.join("\n");
+      els.saveRentalEdit.disabled = true;
+      saveDatabaseState();
+      setStatus(`Updated rental "${finalName}".`);
+      closeRentalEditor();
+      renderAll();
+    }
+
+    function updateTransactionRentalDetails(transaction, oldName, newName, owner, units) {
+      const next = { ...transaction };
+      if (next.property === oldName) {
+        next.property = newName;
+        next.owner = owner;
+        if (next.unit && !units.includes(next.unit)) next.unit = "";
+      }
+      if (Array.isArray(next.splits)) {
+        next.splits = next.splits.map((split) => {
+          if (split.property !== oldName) return split;
+          return {
+            ...split,
+            property: newName,
+            owner,
+            unit: split.unit && units.includes(split.unit) ? split.unit : ""
+          };
+        });
+      }
+      return next;
+    }
+
+    function deleteRental(propertyName) {
+      const existing = properties.find((property) => property === propertyName);
+      if (!existing) return;
+
+      storeActiveBranch();
+      const assignedCount = [...rentalTransactions, ...accountingTransactions].filter((transaction) =>
+        transaction.property === existing ||
+        (Array.isArray(transaction.splits) && transaction.splits.some((split) => split.property === existing))
+      ).length;
+      const warning = assignedCount
+        ? `Delete "${existing}" and unassign ${assignedCount} transaction${assignedCount === 1 ? "" : "s"} using it?`
+        : `Delete "${existing}"?`;
+      if (!confirm(warning)) return;
+
+      properties = properties.filter((property) => property !== existing);
+      delete propertyDetails[existing];
+      mapAllTransactionBranches((transaction) => {
+        const next = { ...transaction };
+        if (next.property === existing) {
+          next.property = "";
+          if (!next.ignored && !hasSplits(next)) {
+            next.confidence = "Needs review";
+            next.source = "";
+          }
+        }
+        if (Array.isArray(next.splits)) {
+          next.splits = next.splits.map((split) =>
+            split.property === existing ? { ...split, property: "" } : split
+          );
+        }
+        return next;
+      });
+
+      els.propertiesInput.value = properties.join("\n");
+      saveDatabaseState();
+      setStatus(`Deleted rental "${existing}". Matching transactions were moved to Unassigned.`);
+      renderAll();
+    }
+
+    function mapAllTransactionBranches(mapper) {
+      storeActiveBranch();
+      rentalTransactions = rentalTransactions.map(mapper);
+      accountingTransactions = accountingTransactions.map(mapper);
+      activateBranch();
+    }
+
+    function addCategory(categoryName) {
+      const cleanName = categoryName.trim();
+      const existing = categories.find((category) => category.toLowerCase() === cleanName.toLowerCase());
+      if (existing) return existing;
+
+      categories.push(cleanName);
+      categories.sort((a, b) => a.localeCompare(b));
+      saveDatabaseState();
+      return cleanName;
+    }
+
+    function persistTransactions() {
+      saveDatabaseState();
+    }
+
+    function aiTransactionPayload(transaction) {
+      return {
+        id: transaction.id,
+        date: transaction.date,
+        description: transaction.description,
+        amount: transaction.amount,
+        type: transaction.type,
+        property: transaction.property,
+        category: transaction.category
+      };
+    }
+
+    function resetLists() {
+      if (!confirm("Reset saved rentals and categories? Saved transactions will be kept.")) return;
+      categories = [...defaultCategories];
+      owners = [];
+      properties = [];
+      propertyDetails = {};
+      els.ownersInput.value = owners.join("\n");
+      els.propertiesInput.value = properties.join("\n");
+      saveDatabaseState();
+      setStatus("Rentals and categories were reset. Saved transactions were kept.");
+      renderAll();
+    }
+
+    function clearTransactions() {
+      const label = appMode === "accounting" ? "company accounting" : "rental sorter";
+      if (!confirm(`Clear all saved ${label} transactions? Rentals and categories will be kept.`)) return;
+      transactions = [];
+      saveDatabaseState();
+      setStatus(`Saved ${label} transactions were cleared.`);
+      renderAll();
+    }
+
+    function exportTransactions() {
+      if (!transactions.length) return;
+      const rows = transactions.flatMap((transaction) => transactionAllocations(transaction).map((allocation) => ({
+        OriginalTransactionId: transaction.id,
+        AllocationId: allocation.id,
+        Date: allocation.date,
+        Description: allocation.description,
+        Type: allocation.type,
+        Amount: allocation.amount.toFixed(2),
+        Owner: allocation.owner || "",
+        Rental: allocation.property,
+        Unit: allocation.unit || "",
+        Category: allocation.category,
+        Status: allocation.confidence,
+        Source: allocation.source || ""
+      })));
+      downloadCsv(appMode === "accounting" ? "company-accounting-transactions.csv" : "rental-transactions.csv", rows);
+    }
+
+    function downloadCsv(filename, rows) {
+      if (!rows.length) return;
+      const headers = Object.keys(rows[0]);
+      const csv = [
+        headers.join(","),
+        ...rows.map((row) => headers.map((header) => csvCell(row[header])).join(","))
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let quoted = false;
+
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"' && quoted && next === '"') {
+          cell += '"';
+          i += 1;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === "," && !quoted) {
+          row.push(cell);
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") i += 1;
+          row.push(cell);
+          if (row.some((value) => value.trim())) rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+
+      row.push(cell);
+      if (row.some((value) => value.trim())) rows.push(row);
+      if (!rows.length) return [];
+
+      const headers = rows[0].map((header) => header.trim());
+      return rows.slice(1).map((values) => {
+        const record = {};
+        headers.forEach((header, index) => {
+          record[header] = values[index] || "";
+        });
+        return record;
+      });
+    }
+
+    function findColumn(keys, candidates) {
+      const normalized = keys.map((key) => ({ key, value: normalizeText(key) }));
+      const exact = normalized.find((item) => candidates.includes(item.value));
+      if (exact) return exact.key;
+      const partial = normalized.find((item) => candidates.some((candidate) => item.value.includes(candidate)));
+      return partial ? partial.key : "";
+    }
+
+    function parseMoney(value) {
+      if (value == null) return 0;
+      const text = String(value).replace(/[,$]/g, "").trim();
+      if (!text) return 0;
+      if (/^\(.+\)$/.test(text)) return -Math.abs(Number(text.slice(1, -1)));
+      return Number(text) || 0;
+    }
+
+    function transactionId(date, description, amount, index) {
+      const base = `${date}|${normalizeText(description)}|${Number(amount).toFixed(2)}|${index}`;
+      let hash = 0;
+      for (let i = 0; i < base.length; i += 1) {
+        hash = ((hash << 5) - hash) + base.charCodeAt(i);
+        hash |= 0;
+      }
+      return `tx-${Math.abs(hash)}`;
+    }
+
+    function manualTransactionId(date, description, amount) {
+      return transactionId(date, description, amount, `${Date.now()}-${transactions.length}`).replace(/^tx-/, "manual-");
+    }
+
+    function formatManualDate(value) {
+      const [year, month, day] = value.split("-");
+      if (!year || !month || !day) return value;
+      return `${month}/${day}/${year}`;
+    }
+
+    function dateInputValue(value) {
+      const parsed = parseDateParts(value);
+      if (!parsed) return "";
+      return [
+        parsed.year,
+        String(parsed.month).padStart(2, "0"),
+        String(parsed.day || 1).padStart(2, "0")
+      ].join("-");
+    }
+
+    function normalizeText(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function csvCell(value) {
+      const text = String(value ?? "");
+      if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+      return text;
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD"
+      }).format(value || 0);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function writeRecoveryDraft(state) {
+      try {
+        localStorage.setItem(RECOVERY_STORAGE_KEY, JSON.stringify({
+          savedAt: new Date().toISOString(),
+          state
+        }));
+      } catch {
+        setStatus("Browser recovery storage is full or unavailable. MongoDB must reconnect before more work is safe.");
+      }
+    }
+
+    function readRecoveryDraft() {
+      try {
+        const draft = JSON.parse(localStorage.getItem(RECOVERY_STORAGE_KEY) || "null");
+        if (!draft || !draft.state || typeof draft.state !== "object") return null;
+        return draft;
+      } catch {
+        return null;
+      }
+    }
+
+    function clearRecoveryDraft() {
+      try {
+        localStorage.removeItem(RECOVERY_STORAGE_KEY);
+      } catch {
+        // Best effort only; a stale recovery prompt is safer than deleting user work.
+      }
+    }
+
+    function formatRecoveryTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "an unknown time";
+      return date.toLocaleString();
+    }
+
+    function readLegacyJson(key, fallback) {
+      try {
+        return JSON.parse(localStorage.getItem(key)) || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function currentState() {
+      normalizePropertyDetails();
+      storeActiveBranch();
+      return {
+        owners,
+        plaidItems: rentalPlaidItems,
+        accounting: {
+          plaidItems: accountingPlaidItems,
+          transactions: accountingTransactions
+        },
+        propertyDetails,
+        properties,
+        categories,
+        transactions: rentalTransactions
+      };
+    }
+
+    function applyState(state) {
+      if (!state) return;
+      owners = Array.isArray(state.owners) ? state.owners : owners;
+      rentalPlaidItems = Array.isArray(state.plaidItems) ? state.plaidItems : rentalPlaidItems;
+      const accounting = state.accounting && typeof state.accounting === "object" ? state.accounting : {};
+      accountingPlaidItems = Array.isArray(accounting.plaidItems) ? accounting.plaidItems : accountingPlaidItems;
+      accountingTransactions = Array.isArray(accounting.transactions) ? accounting.transactions : accountingTransactions;
+      propertyDetails = state.propertyDetails && typeof state.propertyDetails === "object" ? state.propertyDetails : propertyDetails;
+      properties = Array.isArray(state.properties) ? state.properties : properties;
+      categories = Array.isArray(state.categories) ? state.categories : categories;
+      rentalTransactions = Array.isArray(state.transactions) ? state.transactions : rentalTransactions;
+      normalizePropertyDetails();
+      rentalTransactions = rentalTransactions.map(normalizeTransactionHierarchy);
+      accountingTransactions = accountingTransactions.map(normalizeAccountingTransaction);
+      activateBranch();
+      els.ownersInput.value = owners.join("\n");
+      els.propertiesInput.value = properties.join("\n");
+      updatePlaidStatus();
+    }
+
+    async function maybeMigrateLegacyBrowserState() {
+      const legacyState = {
+        properties: readLegacyJson(LEGACY_STORAGE_KEYS.properties, []),
+        categories: readLegacyJson(LEGACY_STORAGE_KEYS.categories, []),
+        transactions: readLegacyJson(LEGACY_STORAGE_KEYS.transactions, [])
+      };
+      const hasLegacyData = legacyState.properties.length || legacyState.categories.length || legacyState.transactions.length;
+      const mongoHasTransactions = transactions.length > 0;
+
+      if (!hasLegacyData) return;
+
+      if (!mongoHasTransactions && legacyState.transactions.length && confirm("Browser storage has old rental app data. Move it into MongoDB now and clear the browser copy?")) {
+        applyState({
+          properties: legacyState.properties.length ? legacyState.properties : properties,
+          categories: legacyState.categories.length ? legacyState.categories : categories,
+          transactions: legacyState.transactions
+        });
+        await saveDatabaseState();
+        clearLegacyBrowserState();
+        renderAll();
+        return;
+      }
+    }
+
+    function clearLegacyBrowserState() {
+      Object.values(LEGACY_STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
+    }
+
+    function normalizePropertyDetails() {
+      Object.values(propertyDetails || {}).forEach((detail) => {
+        const owner = String(detail?.owner || "").trim();
+        if (owner) owners.push(owner);
+      });
+      owners = uniqueNames(owners);
+      const nextDetails = {};
+      properties.forEach((property) => {
+        const detail = propertyDetails[property] || {};
+        const owner = owners.find((name) => name.toLowerCase() === String(detail.owner || "").toLowerCase()) || "";
+        nextDetails[property] = {
+          owner,
+          units: uniqueNames(Array.isArray(detail.units) ? detail.units : [])
+        };
+      });
+      propertyDetails = nextDetails;
+    }
+
+    function normalizeTransactionHierarchy(transaction) {
+      const next = { ...transaction };
+      if (!next.owner && next.property) next.owner = ownerForProperty(next.property);
+      if (next.unit && !unitsForProperty(next.property).includes(next.unit)) next.unit = "";
+      if (Array.isArray(next.splits)) {
+        next.splits = next.splits.map((split) => ({
+          ...split,
+          owner: split.owner || ownerForProperty(split.property),
+          unit: unitsForProperty(split.property).includes(split.unit) ? split.unit : ""
+        }));
+      }
+      return next;
+    }
+
+    function normalizeAccountingTransaction(transaction) {
+      const next = normalizeTransactionHierarchy(transaction);
+      next.billable = transaction.billable === true || Boolean(transaction.property);
+      if (!next.billable) {
+        next.property = "";
+        next.owner = "";
+        next.unit = "";
+      }
+      return next;
+    }
+
+    function isBillableTransaction(transaction) {
+      return transaction.billable === true || Boolean(transaction.property);
+    }
+
+    function ownerForProperty(property) {
+      return propertyDetails[property]?.owner || "";
+    }
+
+    function unitsForProperty(property) {
+      return propertyDetails[property]?.units || [];
+    }
+
+    function propertiesForOwner(owner) {
+      if (!owner) return properties;
+      return properties.filter((property) => ownerForProperty(property) === owner);
+    }
+
+    function setEditingEnabled(enabled) {
+      [
+        els.csvFile,
+        els.manualDate,
+        els.manualAmount,
+        els.manualDescription,
+        els.manualType,
+        els.manualOwner,
+        els.manualProperty,
+        els.manualUnit,
+        els.manualCategory,
+        els.addManualTransaction,
+        els.connectPlaid,
+        els.syncPlaid,
+        els.savePlaidAccounts,
+        els.ownersInput,
+        els.saveOwners,
+        els.propertiesInput,
+        els.saveProperties,
+        els.backupData,
+        els.clearData,
+        els.clearTransactions,
+        els.aiMatch,
+        els.exportCsv
+      ].forEach((element) => {
+        element.disabled = !enabled;
+      });
+      renderRentalList();
+      updatePlaidStatus();
+    }
+
+    function uniqueNames(names) {
+      const byLower = new Map();
+      names.forEach((name) => {
+        const clean = String(name || "").trim();
+        if (!clean) return;
+        const key = clean.toLowerCase();
+        if (!byLower.has(key)) byLower.set(key, clean);
+      });
+      return Array.from(byLower.values()).sort((a, b) => a.localeCompare(b));
+    }
+
+    function setStatus(message) {
+      els.appStatus.textContent = message || "";
+    }
+
+    function updatePlaidStatus() {
+      if (!els.plaidStatus) return;
+      if (!plaidItems.length) {
+        els.plaidStatus.textContent = databaseReady
+          ? appMode === "accounting" ? "No accounting Plaid bank connected." : "No Plaid bank connected."
+          : "Connect MongoDB before using Plaid.";
+        return;
+      }
+
+      const names = plaidItems
+        .map((item) => item.institutionName || "Connected bank")
+        .filter(Boolean);
+      const selected = plaidItems.reduce((sum, item) => sum + (Array.isArray(item.selectedAccountIds) ? item.selectedAccountIds.length : 0), 0);
+      const label = appMode === "accounting" ? "Accounting Plaid" : "Plaid";
+      els.plaidStatus.textContent = `${label} connected: ${names.join(", ")}. ${selected} account${selected === 1 ? "" : "s"} selected for sync.`;
+    }
+
+    function renderPlaidAccounts() {
+      if (!els.plaidAccounts) return;
+      if (!plaidItems.length) {
+        els.plaidAccounts.innerHTML = "";
+        return;
+      }
+
+      els.plaidAccounts.innerHTML = plaidItems.map((item) => {
+        const selected = new Set(Array.isArray(item.selectedAccountIds) ? item.selectedAccountIds : []);
+        const accounts = Array.isArray(item.accounts) ? item.accounts : [];
+        return `
+          <div class="plaid-account-group">
+            ${accounts.map((account) => {
+              const label = [
+                account.name || "Account",
+                account.mask ? `...${account.mask}` : "",
+                account.subtype || account.type || ""
+              ].filter(Boolean).join(" / ");
+              return `
+                <label class="plaid-account">
+                  <input type="checkbox" data-plaid-item="${escapeHtml(item.itemId)}" value="${escapeHtml(account.id)}" ${selected.has(account.id) ? "checked" : ""}>
+                  <span>
+                    <strong>${escapeHtml(account.name || "Account")}</strong>
+                    <span>${escapeHtml(`${item.institutionName || "Connected bank"}${label ? ` / ${label}` : ""}`)}</span>
+                  </span>
+                </label>
+              `;
+            }).join("")}
+          </div>
+        `;
+      }).join("");
+    }
+  </script>
+</body>
+</html>
